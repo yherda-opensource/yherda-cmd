@@ -120,3 +120,19 @@ func (c *Client) Post(path string, body any, out any) error {
 	}
 	return nil
 }
+
+func (c *Client) Patch(path string, body any, out any) error {
+	resp, err := c.do("PATCH", path, body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		data, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API error %d: %s", resp.StatusCode, string(data))
+	}
+	if out != nil {
+		return json.NewDecoder(resp.Body).Decode(out)
+	}
+	return nil
+}
