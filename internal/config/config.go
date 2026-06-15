@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ActiveWorkspace string `json:"active_workspace"`
+	APIServer       string `json:"api_server,omitempty"`
 	ActiveIdea      string `json:"active_idea,omitempty"`
 	ActivePerson    string `json:"active_person,omitempty"`
 	ActiveArc       string `json:"active_arc,omitempty"`

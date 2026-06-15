@@ -116,7 +116,7 @@ func mustPublicClient() *api.Client {
 	if creds == nil {
 		fatalf("not logged in — run 'yherda login' first")
 	}
-	return api.New("", creds)
+	return api.NewPublic(creds)
 }
 
 func mustClient() *api.Client {
@@ -134,5 +134,8 @@ func mustClient() *api.Client {
 	if cfg.ActiveWorkspace == "" {
 		fatalf("no active workspace — run 'yherda workspace <slug>'")
 	}
-	return api.New(cfg.ActiveWorkspace, creds)
+	if cfg.APIServer == "" {
+		fatalf("no API server configured — run 'yherda workspace <slug>' to reconfigure")
+	}
+	return api.New(cfg.APIServer, creds)
 }

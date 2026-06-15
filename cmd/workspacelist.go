@@ -9,6 +9,7 @@ import (
 var workspaceListCmd = &cobra.Command{
 	Use:   "workspacelist",
 	Short: "List all workspaces available to the authenticated user",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustPublicClient()
 		var result []map[string]any

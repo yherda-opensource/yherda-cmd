@@ -6,46 +6,39 @@ import (
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-func TestBaseURL_Dev(t *testing.T) {
-	t.Setenv("YHERDA_DOMAIN_ROOT", "yherda.test:8000")
+func TestBaseURL_ExplicitAPIServer(t *testing.T) {
 	creds := &config.Credentials{AccessToken: "tok"}
 
-	c := &Client{workspace: "myworkspace", creds: creds}
-	if got, want := c.baseURL(), "https://myworkspace.yherda.test:8000/api"; got != want {
-		t.Errorf("workspace: got %q, want %q", got, want)
-	}
-
-	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.yherda.test:8000"; got != want {
-		t.Errorf("public: got %q, want %q", got, want)
+	c := New("https://community.yherda.test:8000", creds)
+	if got, want := c.baseURL(), "https://community.yherda.test:8000/api"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
-func TestBaseURL_Staging(t *testing.T) {
-	t.Setenv("YHERDA_DOMAIN_ROOT", "staging.a.yherda.com")
+func TestBaseURL_ProductionAPIServer(t *testing.T) {
 	creds := &config.Credentials{AccessToken: "tok"}
 
-	c := &Client{workspace: "myworkspace", creds: creds}
-	if got, want := c.baseURL(), "https://myworkspace.staging.a.yherda.com/api"; got != want {
-		t.Errorf("workspace: got %q, want %q", got, want)
-	}
-
-	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.staging.a.yherda.com"; got != want {
-		t.Errorf("public: got %q, want %q", got, want)
+	c := New("https://community.a.yherda.com", creds)
+	if got, want := c.baseURL(), "https://community.a.yherda.com/api"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
-func TestBaseURL_Production(t *testing.T) {
+func TestBaseURL_PublicHost_Default(t *testing.T) {
 	creds := &config.Credentials{AccessToken: "tok"}
 
-	c := &Client{workspace: "myworkspace", creds: creds}
-	if got, want := c.baseURL(), "https://myworkspace.a.yherda.com/api"; got != want {
-		t.Errorf("workspace: got %q, want %q", got, want)
+	c := NewPublic(creds)
+	if got, want := c.baseURL(), "https://public.a.yherda.com"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
+}
 
-	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.a.yherda.com"; got != want {
-		t.Errorf("public: got %q, want %q", got, want)
+func TestBaseURL_PublicHost_Override(t *testing.T) {
+	t.Setenv("YHERDA_PUBLIC_HOST", "https://public.yherda.test:8000")
+	creds := &config.Credentials{AccessToken: "tok"}
+
+	c := NewPublic(creds)
+	if got, want := c.baseURL(), "https://public.yherda.test:8000"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
