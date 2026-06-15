@@ -24,18 +24,30 @@ func TestDocsUpdate_MissingArg(t *testing.T) {
 	}
 }
 
-// TestDocsList_MissingIdeaFlag verifies that docs list fails without --idea.
-func TestDocsList_MissingIdeaFlag(t *testing.T) {
+// TestDocsList_NoIdeaContext verifies that doc list fails with no --idea and no active context.
+func TestDocsList_NoIdeaContext(t *testing.T) {
 	withTempHome(t)
 	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"doc", "list"})
 	err := rootCmd.Execute()
 	if err == nil {
-		t.Fatal("expected error when --idea flag is missing")
+		t.Fatal("expected error when --idea flag is missing and no active idea in context")
 	}
-	if err.Error() != "--idea is required" {
+	if err.Error() != "no active idea — run 'yherda ideas use <id>' or pass --idea" {
 		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+// TestDocsList_ContextIdeaUsed verifies that doc list uses active idea from context.
+func TestDocsList_ContextIdeaUsed(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+
+	rootCmd.SetArgs([]string{"doc", "list"})
+	err := rootCmd.Execute()
+	if err != nil && err.Error() == "no active idea — run 'yherda ideas use <id>' or pass --idea" {
+		t.Error("active_idea in config should have satisfied the requirement")
 	}
 }
 

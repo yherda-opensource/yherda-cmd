@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
 func readContent(cmd *cobra.Command) (string, error) {
@@ -35,7 +36,14 @@ var docsListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {
-			return fmt.Errorf("--idea is required")
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			ideaID = cfg.ActiveIdea
+		}
+		if ideaID == "" {
+			return fmt.Errorf("no active idea — run 'yherda ideas use <id>' or pass --idea")
 		}
 		client := mustClient()
 		var result []map[string]any
@@ -126,7 +134,7 @@ var docsUpdateCmd = &cobra.Command{
 }
 
 func init() {
-	docsListCmd.Flags().String("idea", "", "Idea ID to list documents for (required)")
+	docsListCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
 	docsCreateCmd.Flags().String("idea", "", "Idea ID to create the document under (required)")
 	docsCreateCmd.Flags().String("title", "", "Document title (required)")
 	docsCreateCmd.Flags().String("file", "", "Path to markdown file (reads stdin if omitted)")
