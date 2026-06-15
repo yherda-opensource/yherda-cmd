@@ -45,6 +45,7 @@ func init() {
 	rootCmd.AddCommand(workspaceListCmd)
 	rootCmd.AddCommand(formatCmd)
 	rootCmd.AddCommand(expressionCmd)
+	rootCmd.AddCommand(docsCmd)
 }
 
 func printJSON(v any) {
