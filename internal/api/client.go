@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-const publicHost = "public.a.yherda.com"
+const defaultAPIURL = "https://public.a.yherda.com"
 
 type Client struct {
 	workspace string
@@ -27,10 +29,22 @@ func New(workspace string, creds *config.Credentials) *Client {
 }
 
 func (c *Client) baseURL() string {
-	if c.workspace == "" {
-		return fmt.Sprintf("https://%s/api/v1", publicHost)
+	base := os.Getenv("YHERDA_API_URL")
+	if base == "" {
+		base = defaultAPIURL
 	}
-	return fmt.Sprintf("https://%s.a.yherda.com/api/v1", c.workspace)
+	base = strings.TrimRight(base, "/")
+
+	// If a custom URL is set, use it directly (local dev, staging, etc.)
+	if os.Getenv("YHERDA_API_URL") != "" {
+		return base + "/api/v1"
+	}
+
+	// Default: route to tenant subdomain
+	if c.workspace != "" {
+		return fmt.Sprintf("https://%s.a.yherda.com/api/v1", c.workspace)
+	}
+	return base + "/api/v1"
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
