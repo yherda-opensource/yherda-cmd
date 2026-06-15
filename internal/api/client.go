@@ -73,6 +73,10 @@ func (c *Client) do(method, path string, body any) (*http.Response, error) {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.creds.AccessToken))
 	}
 
+	if os.Getenv("DEVELOPER") == "1" {
+		fmt.Fprintf(os.Stderr, "[dev] %s %s\n", method, req.URL.String())
+	}
+
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
