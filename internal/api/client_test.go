@@ -83,8 +83,8 @@ func TestGet_PathRouting(t *testing.T) {
 			if err := client.Get(tc.path, &result); err != nil {
 				t.Fatalf("Get(%q): %v", tc.path, err)
 			}
-			if gotPath != "/api/v1"+tc.path {
-				t.Errorf("path: got %q, want %q", gotPath, "/api/v1"+tc.path)
+			if gotPath != "/api"+tc.path {
+				t.Errorf("path: got %q, want %q", gotPath, "/api"+tc.path)
 			}
 		})
 	}

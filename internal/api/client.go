@@ -37,14 +37,14 @@ func (c *Client) baseURL() string {
 
 	// If a custom URL is set, use it directly (local dev, staging, etc.)
 	if os.Getenv("YHERDA_API_URL") != "" {
-		return base + "/api/v1"
+		return base + "/api"
 	}
 
 	// Default: route to tenant subdomain
 	if c.workspace != "" {
-		return fmt.Sprintf("https://%s.a.yherda.com/api/v1", c.workspace)
+		return fmt.Sprintf("https://%s.a.yherda.com/api", c.workspace)
 	}
-	return base + "/api/v1"
+	return base + "/api"
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
