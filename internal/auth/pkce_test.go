@@ -38,7 +38,7 @@ func TestMakePKCEPair(t *testing.T) {
 }
 
 func TestBuildAuthURL(t *testing.T) {
-	t.Setenv("YHERDA_API_URL", "https://public.example.com")
+	t.Setenv("YHERDA_PUBLIC_HOST", "https://public.example.com")
 
 	redirectURI := "http://127.0.0.1:9999/callback"
 	challenge := "test-challenge"
@@ -65,7 +65,7 @@ func TestBuildAuthURL(t *testing.T) {
 	}
 
 	if !strings.HasPrefix(raw, "https://public.example.com") {
-		t.Errorf("URL does not use YHERDA_API_URL base: %s", raw)
+		t.Errorf("URL does not use YHERDA_PUBLIC_HOST base: %s", raw)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestExchangeCode_Success(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	t.Setenv("YHERDA_API_URL", srv.URL)
+	t.Setenv("YHERDA_PUBLIC_HOST", srv.URL)
 
 	creds, err := exchangeCode("test-code", "test-verifier", "http://127.0.0.1:9999/callback")
 	if err != nil {
@@ -120,7 +120,7 @@ func TestExchangeCode_ServerError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	t.Setenv("YHERDA_API_URL", srv.URL)
+	t.Setenv("YHERDA_PUBLIC_HOST", srv.URL)
 
 	_, err := exchangeCode("bad-code", "bad-verifier", "http://127.0.0.1:9999/callback")
 	if err == nil {
@@ -135,7 +135,7 @@ func TestExchangeCode_MismatchedVerifier(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	t.Setenv("YHERDA_API_URL", srv.URL)
+	t.Setenv("YHERDA_PUBLIC_HOST", srv.URL)
 
 	_, err := exchangeCode("test-code", "wrong-verifier", "http://127.0.0.1:9999/callback")
 	if err == nil {
