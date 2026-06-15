@@ -41,3 +41,10 @@ func TestThingUse_MissingArg(t *testing.T) {
 		t.Fatal("expected error when id argument is missing")
 	}
 }
+
+func TestWorkspaceList_RejectsArgs(t *testing.T) {
+	rootCmd.SetArgs([]string{"workspacelist", "extra-arg"})
+	if err := rootCmd.Execute(); err == nil {
+		t.Fatal("expected error when unexpected argument is passed")
+	}
+}
