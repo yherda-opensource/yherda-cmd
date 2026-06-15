@@ -25,7 +25,7 @@ func readContent(cmd *cobra.Command) (string, error) {
 }
 
 var docsCmd = &cobra.Command{
-	Use:   "docs",
+	Use:   "doc",
 	Short: "Manage idea documents",
 }
 

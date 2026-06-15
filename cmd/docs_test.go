@@ -10,7 +10,7 @@ import (
 
 // TestDocsShow_MissingArg verifies that docs show requires a positional argument.
 func TestDocsShow_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"docs", "show"})
+	rootCmd.SetArgs([]string{"doc", "show"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when doc-id argument is missing")
 	}
@@ -18,7 +18,7 @@ func TestDocsShow_MissingArg(t *testing.T) {
 
 // TestDocsUpdate_MissingArg verifies that docs update requires a positional argument.
 func TestDocsUpdate_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"docs", "update"})
+	rootCmd.SetArgs([]string{"doc", "update"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when doc-id argument is missing")
 	}
@@ -29,7 +29,7 @@ func TestDocsList_MissingIdeaFlag(t *testing.T) {
 	withTempHome(t)
 	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
-	rootCmd.SetArgs([]string{"docs", "list"})
+	rootCmd.SetArgs([]string{"doc", "list"})
 	err := rootCmd.Execute()
 	if err == nil {
 		t.Fatal("expected error when --idea flag is missing")
@@ -44,7 +44,7 @@ func TestDocsCreate_MissingIdeaFlag(t *testing.T) {
 	withTempHome(t)
 	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
-	rootCmd.SetArgs([]string{"docs", "create", "--title", "My Doc"})
+	rootCmd.SetArgs([]string{"doc", "create", "--title", "My Doc"})
 	err := rootCmd.Execute()
 	if err == nil {
 		t.Fatal("expected error when --idea flag is missing")
@@ -68,7 +68,7 @@ func TestDocsCreate_MissingTitleFlag(t *testing.T) {
 		docsCreateCmd.Flags().Set("title", "")
 	})
 
-	rootCmd.SetArgs([]string{"docs", "create", "--idea", "idea-1"})
+	rootCmd.SetArgs([]string{"doc", "create", "--idea", "idea-1"})
 	err := rootCmd.Execute()
 	if err == nil {
 		t.Fatal("expected error when --title flag is missing")
@@ -83,7 +83,7 @@ func TestDocsCreate_MissingFile(t *testing.T) {
 	withTempHome(t)
 	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
-	rootCmd.SetArgs([]string{"docs", "create", "--idea", "idea-1", "--title", "My Doc", "--file", "/nonexistent/path.md"})
+	rootCmd.SetArgs([]string{"doc", "create", "--idea", "idea-1", "--title", "My Doc", "--file", "/nonexistent/path.md"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when --file path does not exist")
 	}
@@ -94,7 +94,7 @@ func TestDocsUpdate_MissingFile(t *testing.T) {
 	withTempHome(t)
 	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
-	rootCmd.SetArgs([]string{"docs", "update", "doc-1", "--file", "/nonexistent/path.md"})
+	rootCmd.SetArgs([]string{"doc", "update", "doc-1", "--file", "/nonexistent/path.md"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when --file path does not exist")
 	}

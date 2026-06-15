@@ -2,7 +2,7 @@
 
 ## Summary
 
-Add a `yherda docs` subcommand group for listing, showing, creating, and updating IdeaDocument records. All commands map to existing backend API endpoints — no backend changes required.
+Add a `yherda doc` subcommand group for listing, showing, creating, and updating IdeaDocument records. All commands map to existing backend API endpoints — no backend changes required.
 
 ## API Endpoints
 
@@ -18,10 +18,10 @@ Fields: `id`, `title`, `body`, `created`, `updated`. The `body` field contains m
 ## Commands
 
 ```
-yherda docs list --idea <idea-id>
-yherda docs show <doc-id>
-yherda docs create --idea <idea-id> --title <title> [--file <file.md>]
-yherda docs update <doc-id> [--file <file.md>]
+yherda doc list --idea <idea-id>
+yherda doc show <doc-id>
+yherda doc create --idea <idea-id> --title <title> [--file <file.md>]
+yherda doc update <doc-id> [--file <file.md>]
 ```
 
 - `--file` reads content from a file path; if omitted, content is read from stdin
