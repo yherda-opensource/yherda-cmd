@@ -31,6 +31,7 @@ func listArcs(client *api.Client, personID string) error {
 		fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "want"))
 	}
 	w.Flush()
+	printContext()
 	return nil
 }
 
@@ -54,6 +55,7 @@ var arcListCmd = &cobra.Command{
 				fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "want"))
 			}
 			w.Flush()
+			printContext()
 			return nil
 		}
 

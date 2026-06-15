@@ -30,6 +30,7 @@ func listIdentities(client *api.Client, personID string) error {
 		fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
 	}
 	w.Flush()
+	printContext()
 	return nil
 }
 

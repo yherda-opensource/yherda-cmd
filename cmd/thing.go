@@ -30,6 +30,7 @@ func listThings(client *api.Client, ideaID string) error {
 		fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
 	}
 	w.Flush()
+	printContext()
 	return nil
 }
 

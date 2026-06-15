@@ -49,6 +49,7 @@ var settingListCmd = &cobra.Command{
 			)
 		}
 		w.Flush()
+		printContext()
 		return nil
 	},
 }

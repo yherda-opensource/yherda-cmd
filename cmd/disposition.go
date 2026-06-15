@@ -49,6 +49,7 @@ var dispositionListCmd = &cobra.Command{
 			)
 		}
 		w.Flush()
+		printContext()
 		return nil
 	},
 }

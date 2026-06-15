@@ -34,6 +34,7 @@ func listBeats(client *api.Client, arcID string) error {
 		)
 	}
 	w.Flush()
+	printContext()
 	return nil
 }
 

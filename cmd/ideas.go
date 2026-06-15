@@ -28,6 +28,7 @@ func listIdeas(client *api.Client) error {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
 	}
 	w.Flush()
+	printContext()
 	return nil
 }
 
