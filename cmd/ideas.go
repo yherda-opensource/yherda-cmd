@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
 var ideasCmd = &cobra.Command{
 	Use:   "ideas",
 	Short: "Manage ideas",
-	Long:  "List, show, and create ideas. Ideas are the top-level container in Yherda (API path: /storylines/).",
 }
 
 var ideasListCmd = &cobra.Command{
@@ -15,11 +16,20 @@ var ideasListCmd = &cobra.Command{
 	Short: "List all ideas in the active workspace",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
-		var result any
-		if err := client.Get("/storylines/", &result); err != nil {
+		var result []map[string]any
+		if err := client.Get("/storyline/", &result); err != nil {
 			return err
 		}
-		printJSON(result)
+		if jsonOutput {
+			printJSON(result)
+			return nil
+		}
+		w := newTabWriter()
+		fmt.Fprintln(w, "ID\tNAME\tABSTRACT")
+		for _, row := range result {
+			fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
+		}
+		w.Flush()
 		return nil
 	},
 }
@@ -30,11 +40,19 @@ var ideasShowCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
-		var result any
-		if err := client.Get("/storylines/"+args[0]+"/", &result); err != nil {
+		var result map[string]any
+		if err := client.Get("/storyline/"+args[0]+"/", &result); err != nil {
 			return err
 		}
-		printJSON(result)
+		if jsonOutput {
+			printJSON(result)
+			return nil
+		}
+		w := newTabWriter()
+		for _, key := range []string{"id", "name", "abstract", "idea_type"} {
+			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
+		}
+		w.Flush()
 		return nil
 	},
 }
@@ -48,8 +66,8 @@ var ideasCreateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 		client := mustClient()
-		var result any
-		if err := client.Post("/storylines/", map[string]string{"name": name}, &result); err != nil {
+		var result map[string]any
+		if err := client.Post("/storyline/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		printJSON(result)

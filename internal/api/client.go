@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,10 +10,11 @@ import (
 	"os"
 	"strings"
 
+
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-const defaultAPIURL = "https://public.a.yherda.com"
+const defaultDomainRoot = "a.yherda.com"
 
 type Client struct {
 	workspace string
@@ -20,31 +22,34 @@ type Client struct {
 	http      *http.Client
 }
 
+func domainRoot() string {
+	if v := os.Getenv("YHERDA_DOMAIN_ROOT"); v != "" {
+		return strings.TrimRight(v, "/")
+	}
+	return defaultDomainRoot
+}
+
 func New(workspace string, creds *config.Credentials) *Client {
+	httpClient := &http.Client{}
+	if os.Getenv("YHERDA_DOMAIN_ROOT") != "" {
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		}
+	}
 	return &Client{
 		workspace: workspace,
 		creds:     creds,
-		http:      &http.Client{},
+		http:      httpClient,
 	}
 }
 
 func (c *Client) baseURL() string {
-	base := os.Getenv("YHERDA_API_URL")
-	if base == "" {
-		base = defaultAPIURL
-	}
-	base = strings.TrimRight(base, "/")
-
-	// If a custom URL is set, use it directly (local dev, staging, etc.)
-	if os.Getenv("YHERDA_API_URL") != "" {
-		return base + "/api/v1"
-	}
-
-	// Default: route to tenant subdomain
 	if c.workspace != "" {
-		return fmt.Sprintf("https://%s.a.yherda.com/api/v1", c.workspace)
+		return fmt.Sprintf("https://%s.%s/api", c.workspace, domainRoot())
 	}
-	return base + "/api/v1"
+	return fmt.Sprintf("https://public.%s/api", domainRoot())
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
@@ -66,6 +71,10 @@ func (c *Client) do(method, path string, body any) (*http.Response, error) {
 	req.Header.Set("Accept", "application/json")
 	if c.creds != nil {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.creds.AccessToken))
+	}
+
+	if os.Getenv("DEVELOPER") == "1" {
+		fmt.Fprintf(os.Stderr, "[dev] %s %s\n", method, req.URL.String())
 	}
 
 	resp, err := c.http.Do(req)
