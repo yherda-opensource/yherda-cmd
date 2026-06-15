@@ -9,11 +9,11 @@ this ticket adds unit tests and confirms all commands are correctly wired.
 
 | Command | API path |
 |---|---|
-| `yherda ideas list` | `GET /storylines/` |
-| `yherda ideas show {id}` | `GET /storylines/{id}/` |
+| `yherda ideas list` | `GET /storyline/` |
+| `yherda ideas show {id}` | `GET /storyline/{id}/` |
 | `yherda identities list --idea {id}` | `GET /ideas/{id}/identities/` |
 | `yherda identities show {id}` | `GET /identities/{id}/` |
-| `yherda arcs list --idea {id}` | `GET /storylines/{id}/arcs/` |
+| `yherda arcs list --idea {id}` | `GET /storyline/{id}/arcs/` |
 | `yherda arcs show {id}` | `GET /arcs/{id}/` |
 | `yherda beats list --arc {id}` | `GET /arcs/{id}/beats/` |
 | `yherda beats show {id}` | `GET /beats/{id}/` |
@@ -23,7 +23,7 @@ Errors go to stderr with a non-zero exit code.
 
 ## Naming
 
-"storyline" does not exist in the CLI or UI. The canonical term is "idea". The `/storylines/`
+"storyline" does not exist in the CLI or UI. The canonical term is "idea". The `/storyline/`
 API path is an internal backend detail only.
 
 ## Unit Test Approach

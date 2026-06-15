@@ -7,7 +7,7 @@ import (
 var ideasCmd = &cobra.Command{
 	Use:   "ideas",
 	Short: "Manage ideas",
-	Long:  "List, show, and create ideas. Ideas are the top-level container in Yherda (API path: /storylines/).",
+	Long:  "List, show, and create ideas. Ideas are the top-level container in Yherda (API path: /storyline/).",
 }
 
 var ideasListCmd = &cobra.Command{
@@ -16,7 +16,7 @@ var ideasListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result any
-		if err := client.Get("/storylines/", &result); err != nil {
+		if err := client.Get("/storyline/", &result); err != nil {
 			return err
 		}
 		printJSON(result)
@@ -31,7 +31,7 @@ var ideasShowCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result any
-		if err := client.Get("/storylines/"+args[0]+"/", &result); err != nil {
+		if err := client.Get("/storyline/"+args[0]+"/", &result); err != nil {
 			return err
 		}
 		printJSON(result)
@@ -49,7 +49,7 @@ var ideasCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result any
-		if err := client.Post("/storylines/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/storyline/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		printJSON(result)

@@ -20,7 +20,7 @@ var arcsListCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result any
-		if err := client.Get("/storylines/"+arcsIdeaID+"/arcs/", &result); err != nil {
+		if err := client.Get("/storyline/"+arcsIdeaID+"/arcs/", &result); err != nil {
 			return err
 		}
 		printJSON(result)

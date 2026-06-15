@@ -21,7 +21,7 @@ var projectsListCmd = &cobra.Command{
 		client := mustClient()
 		// Find the _projects idea, then list its expressions.
 		var ideas []map[string]any
-		if err := client.Get("/storylines/?name=_projects", &ideas); err != nil {
+		if err := client.Get("/storyline/?name=_projects", &ideas); err != nil {
 			return err
 		}
 		if len(ideas) == 0 {
@@ -29,7 +29,7 @@ var projectsListCmd = &cobra.Command{
 		}
 		ideaID := fmt.Sprintf("%v", ideas[0]["id"])
 		var result any
-		if err := client.Get("/storylines/"+ideaID+"/expressions/", &result); err != nil {
+		if err := client.Get("/storyline/"+ideaID+"/expressions/", &result); err != nil {
 			return err
 		}
 		printJSON(result)
