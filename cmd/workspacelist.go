@@ -19,12 +19,9 @@ var workspaceListCmd = &cobra.Command{
 			printJSON(result)
 			return nil
 		}
-		w := newTabWriter()
-		fmt.Fprintln(w, "SLUG\tNAME")
 		for _, row := range result {
-			fmt.Fprintf(w, "%s\t%s\n", strField(row, "slug"), strField(row, "name"))
+			fmt.Println(strField(row, "name"))
 		}
-		w.Flush()
 		return nil
 	},
 }
