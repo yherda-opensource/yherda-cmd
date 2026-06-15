@@ -16,7 +16,7 @@ func TestBaseURL_Dev(t *testing.T) {
 	}
 
 	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.yherda.test:8000/api"; got != want {
+	if got, want := c2.baseURL(), "https://public.yherda.test:8000"; got != want {
 		t.Errorf("public: got %q, want %q", got, want)
 	}
 }
@@ -31,7 +31,7 @@ func TestBaseURL_Staging(t *testing.T) {
 	}
 
 	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.staging.a.yherda.com/api"; got != want {
+	if got, want := c2.baseURL(), "https://public.staging.a.yherda.com"; got != want {
 		t.Errorf("public: got %q, want %q", got, want)
 	}
 }
@@ -45,7 +45,7 @@ func TestBaseURL_Production(t *testing.T) {
 	}
 
 	c2 := &Client{creds: creds}
-	if got, want := c2.baseURL(), "https://public.a.yherda.com/api"; got != want {
+	if got, want := c2.baseURL(), "https://public.a.yherda.com"; got != want {
 		t.Errorf("public: got %q, want %q", got, want)
 	}
 }

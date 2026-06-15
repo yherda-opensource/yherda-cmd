@@ -49,7 +49,7 @@ func (c *Client) baseURL() string {
 	if c.workspace != "" {
 		return fmt.Sprintf("https://%s.%s/api", c.workspace, domainRoot())
 	}
-	return fmt.Sprintf("https://public.%s/api", domainRoot())
+	return fmt.Sprintf("https://public.%s", domainRoot())
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
