@@ -17,7 +17,7 @@ var beatArcID string
 
 func listBeats(client *api.Client, arcID string) error {
 	var result []map[string]any
-	if err := client.Get("/arcs/"+arcID+"/beats/", &result); err != nil {
+	if err := client.Get("/arc/"+arcID+"/beats/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
