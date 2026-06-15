@@ -90,6 +90,28 @@ func TestGet_PathRouting(t *testing.T) {
 	}
 }
 
+func TestBaseURL_WorkspaceSubdomainSubstitution(t *testing.T) {
+	t.Setenv("YHERDA_API_URL", "https://public.yherda.test:8000")
+	creds := &config.Credentials{AccessToken: "tok"}
+
+	client := New("myworkspace", creds)
+	got := client.baseURL()
+	want := "https://myworkspace.yherda.test:8000/api"
+	if got != want {
+		t.Errorf("baseURL: got %q, want %q", got, want)
+	}
+}
+
+func TestBaseURL_WorkspaceSubdomainProduction(t *testing.T) {
+	creds := &config.Credentials{AccessToken: "tok"}
+	client := New("myworkspace", creds)
+	got := client.baseURL()
+	want := "https://myworkspace.a.yherda.com/api"
+	if got != want {
+		t.Errorf("baseURL: got %q, want %q", got, want)
+	}
+}
+
 func TestGet_AuthHeader(t *testing.T) {
 	creds := &config.Credentials{AccessToken: "my-secret-token", TokenType: "Bearer"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

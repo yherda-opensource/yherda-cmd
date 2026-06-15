@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -38,22 +40,36 @@ func New(workspace string, creds *config.Credentials) *Client {
 }
 
 func (c *Client) baseURL() string {
+	if c.workspace != "" {
+		if override := os.Getenv("YHERDA_API_URL"); override != "" {
+			parsed, err := url.Parse(strings.TrimRight(override, "/"))
+			if err == nil && net.ParseIP(parsed.Hostname()) == nil {
+				// Named host: replace subdomain with active workspace.
+				// e.g. https://public.yherda.test:8000 -> https://{workspace}.yherda.test:8000
+				host := parsed.Hostname()
+				port := parsed.Port()
+				parts := strings.SplitN(host, ".", 2)
+				if len(parts) == 2 {
+					host = c.workspace + "." + parts[1]
+				} else {
+					host = c.workspace + "." + host
+				}
+				if port != "" {
+					host = host + ":" + port
+				}
+				parsed.Host = host
+				return parsed.String() + "/api"
+			}
+			// Raw IP (local test server): use URL as-is.
+			return strings.TrimRight(override, "/") + "/api"
+		}
+		return fmt.Sprintf("https://%s.a.yherda.com/api", c.workspace)
+	}
 	base := os.Getenv("YHERDA_API_URL")
 	if base == "" {
 		base = defaultAPIURL
 	}
-	base = strings.TrimRight(base, "/")
-
-	// If a custom URL is set, use it directly (local dev, staging, etc.)
-	if os.Getenv("YHERDA_API_URL") != "" {
-		return base + "/api"
-	}
-
-	// Default: route to tenant subdomain
-	if c.workspace != "" {
-		return fmt.Sprintf("https://%s.a.yherda.com/api", c.workspace)
-	}
-	return base + "/api"
+	return strings.TrimRight(base, "/") + "/api"
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
