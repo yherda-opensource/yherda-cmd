@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/yherda-opensource/yherda-cmd/internal/api"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-var pretty bool
+var jsonOutput bool
 
 var rootCmd = &cobra.Command{
 	Use:   "yherda",
@@ -25,7 +26,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&pretty, "pretty", false, "Pretty-print JSON output")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Output raw JSON")
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(workspaceCmd)
@@ -37,17 +38,22 @@ func init() {
 }
 
 func printJSON(v any) {
-	var data []byte
-	var err error
-	if pretty {
-		data, err = json.MarshalIndent(v, "", "  ")
-	} else {
-		data, err = json.Marshal(v)
-	}
+	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		fatalf("failed to serialize output: %v", err)
 	}
 	fmt.Println(string(data))
+}
+
+func newTabWriter() *tabwriter.Writer {
+	return tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+}
+
+func strField(row map[string]any, key string) string {
+	if v, ok := row[key]; ok && v != nil {
+		return fmt.Sprintf("%v", v)
+	}
+	return ""
 }
 
 func fatalf(format string, args ...any) {
