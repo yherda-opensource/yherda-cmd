@@ -42,6 +42,7 @@ func init() {
 	rootCmd.AddCommand(settingCmd)
 	rootCmd.AddCommand(thingCmd)
 	rootCmd.AddCommand(dispositionCmd)
+	rootCmd.AddCommand(workspaceListCmd)
 }
 
 func printJSON(v any) {
@@ -107,6 +108,17 @@ func joinStrings(ss []string, sep string) string {
 	return result
 }
 
+func mustPublicClient() *api.Client {
+	creds, err := config.LoadCredentials()
+	if err != nil {
+		fatalf("failed to load credentials: %v", err)
+	}
+	if creds == nil {
+		fatalf("not logged in — run 'yherda login' first")
+	}
+	return api.NewPublic(creds)
+}
+
 func mustClient() *api.Client {
 	creds, err := config.LoadCredentials()
 	if err != nil {
@@ -122,5 +134,8 @@ func mustClient() *api.Client {
 	if cfg.ActiveWorkspace == "" {
 		fatalf("no active workspace — run 'yherda workspace <slug>'")
 	}
-	return api.New(cfg.ActiveWorkspace, creds)
+	if cfg.APIServer == "" {
+		fatalf("no API server configured — run 'yherda workspace <slug>' to reconfigure")
+	}
+	return api.New(cfg.APIServer, creds)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -24,10 +25,21 @@ const (
 )
 
 func baseURL() string {
-	if v := os.Getenv("YHERDA_API_URL"); v != "" {
+	if v := os.Getenv("YHERDA_PUBLIC_HOST"); v != "" {
 		return strings.TrimRight(v, "/")
 	}
 	return defaultBase
+}
+
+func httpClient() *http.Client {
+	if os.Getenv("YHERDA_INSECURE") == "1" {
+		return &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		}
+	}
+	return http.DefaultClient
 }
 
 func Login() (*config.Credentials, error) {
@@ -124,11 +136,13 @@ func exchangeCode(code, verifier, redirectURI string) (*config.Credentials, erro
 		"code_verifier": {verifier},
 	}
 
-	resp, err := http.Post(
-		baseURL()+"/oauth/token/",
-		"application/x-www-form-urlencoded",
-		strings.NewReader(form.Encode()),
-	)
+	req, err := http.NewRequest(http.MethodPost, baseURL()+"/oauth/token/", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient().Do(req)
 	if err != nil {
 		return nil, err
 	}

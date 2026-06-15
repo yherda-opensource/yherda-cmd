@@ -36,7 +36,7 @@ func saveContextWithCreds(t *testing.T, cfg *config.Config) {
 func TestPersonList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
 	withTempHome(t)
 	// Stub creds so mustClient() doesn't os.Exit; network call will fail but that's fine.
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"person", "list"})
 	// Should not return the old "no active idea" hard error — falls back to listing ideas.
@@ -48,7 +48,7 @@ func TestPersonList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
 
 func TestPersonList_FlagProvided_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"person", "list", "--idea", "some-id"})
 	err := rootCmd.Execute()
@@ -59,7 +59,7 @@ func TestPersonList_FlagProvided_NoContextError(t *testing.T) {
 
 func TestPersonList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"person", "list"})
 	err := rootCmd.Execute()
@@ -72,7 +72,7 @@ func TestPersonList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestIdentityList_NoPersonContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"identity", "list"})
 	err := rootCmd.Execute()
@@ -83,7 +83,7 @@ func TestIdentityList_NoPersonContext_FallsBack(t *testing.T) {
 
 func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActivePerson: "person-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
 
 	rootCmd.SetArgs([]string{"identity", "list"})
 	err := rootCmd.Execute()
@@ -96,7 +96,7 @@ func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 
 func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"arc", "list"})
 	err := rootCmd.Execute()
@@ -107,7 +107,7 @@ func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
 
 func TestArcList_ContextPersonUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActivePerson: "person-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
 
 	rootCmd.SetArgs([]string{"arc", "list"})
 	err := rootCmd.Execute()
@@ -118,7 +118,7 @@ func TestArcList_ContextPersonUsed_NoContextError(t *testing.T) {
 
 func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"arc", "list", "--idea", "idea-1"})
 	err := rootCmd.Execute()
@@ -131,7 +131,7 @@ func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
 
 func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"beat", "list"})
 	err := rootCmd.Execute()
@@ -142,7 +142,7 @@ func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
 
 func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActiveArc: "arc-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveArc: "arc-1"})
 
 	rootCmd.SetArgs([]string{"beat", "list"})
 	err := rootCmd.Execute()
@@ -155,7 +155,7 @@ func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
 
 func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"place", "list"})
 	err := rootCmd.Execute()
@@ -166,7 +166,7 @@ func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
 
 func TestPlaceList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"place", "list"})
 	err := rootCmd.Execute()
@@ -179,7 +179,7 @@ func TestPlaceList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestSettingList_NoPlaceContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"setting", "list"})
 	err := rootCmd.Execute()
@@ -190,7 +190,7 @@ func TestSettingList_NoPlaceContext_FallsBack(t *testing.T) {
 
 func TestSettingList_ContextPlaceUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActivePlace: "place-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePlace: "place-1"})
 
 	rootCmd.SetArgs([]string{"setting", "list"})
 	err := rootCmd.Execute()
@@ -203,7 +203,7 @@ func TestSettingList_ContextPlaceUsed_NoContextError(t *testing.T) {
 
 func TestThingList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"thing", "list"})
 	err := rootCmd.Execute()
@@ -214,7 +214,7 @@ func TestThingList_NoIdeaContext_FallsBack(t *testing.T) {
 
 func TestThingList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"thing", "list"})
 	err := rootCmd.Execute()
@@ -227,7 +227,7 @@ func TestThingList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestDispositionList_NoThingContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"disposition", "list"})
 	err := rootCmd.Execute()
@@ -238,7 +238,7 @@ func TestDispositionList_NoThingContext_FallsBack(t *testing.T) {
 
 func TestDispositionList_ContextThingUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", ActiveThing: "thing-1"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveThing: "thing-1"})
 
 	rootCmd.SetArgs([]string{"disposition", "list"})
 	err := rootCmd.Execute()

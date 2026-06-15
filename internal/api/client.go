@@ -14,24 +14,25 @@ import (
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-const defaultDomainRoot = "a.yherda.com"
+const defaultPublicHost = "https://public.a.yherda.com"
 
 type Client struct {
-	workspace string
-	creds     *config.Credentials
-	http      *http.Client
+	apiServer  string
+	publicHost string
+	creds      *config.Credentials
+	http       *http.Client
 }
 
-func domainRoot() string {
-	if v := os.Getenv("YHERDA_DOMAIN_ROOT"); v != "" {
+func publicHost() string {
+	if v := os.Getenv("YHERDA_PUBLIC_HOST"); v != "" {
 		return strings.TrimRight(v, "/")
 	}
-	return defaultDomainRoot
+	return defaultPublicHost
 }
 
-func New(workspace string, creds *config.Credentials) *Client {
+func New(apiServer string, creds *config.Credentials) *Client {
 	httpClient := &http.Client{}
-	if os.Getenv("YHERDA_DOMAIN_ROOT") != "" {
+	if os.Getenv("YHERDA_INSECURE") == "1" {
 		httpClient = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
@@ -39,17 +40,25 @@ func New(workspace string, creds *config.Credentials) *Client {
 		}
 	}
 	return &Client{
-		workspace: workspace,
+		apiServer: strings.TrimRight(apiServer, "/"),
 		creds:     creds,
 		http:      httpClient,
 	}
 }
 
+// NewPublic returns a client routed to the public host (no workspace required).
+// Paths are relative to the host root, not /api.
+func NewPublic(creds *config.Credentials) *Client {
+	c := New("", creds)
+	c.publicHost = publicHost()
+	return c
+}
+
 func (c *Client) baseURL() string {
-	if c.workspace != "" {
-		return fmt.Sprintf("https://%s.%s/api", c.workspace, domainRoot())
+	if c.publicHost != "" {
+		return c.publicHost
 	}
-	return fmt.Sprintf("https://public.%s/api", domainRoot())
+	return c.apiServer + "/api"
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
