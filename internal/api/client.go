@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,10 +22,18 @@ type Client struct {
 }
 
 func New(workspace string, creds *config.Credentials) *Client {
+	httpClient := &http.Client{}
+	if os.Getenv("YHERDA_API_URL") != "" {
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		}
+	}
 	return &Client{
 		workspace: workspace,
 		creds:     creds,
-		http:      &http.Client{},
+		http:      httpClient,
 	}
 }
 
