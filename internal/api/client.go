@@ -6,16 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
+
 
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
-const defaultAPIURL = "https://public.a.yherda.com"
+const defaultDomainRoot = "a.yherda.com"
 
 type Client struct {
 	workspace string
@@ -23,9 +22,16 @@ type Client struct {
 	http      *http.Client
 }
 
+func domainRoot() string {
+	if v := os.Getenv("YHERDA_DOMAIN_ROOT"); v != "" {
+		return strings.TrimRight(v, "/")
+	}
+	return defaultDomainRoot
+}
+
 func New(workspace string, creds *config.Credentials) *Client {
 	httpClient := &http.Client{}
-	if os.Getenv("YHERDA_API_URL") != "" {
+	if os.Getenv("YHERDA_DOMAIN_ROOT") != "" {
 		httpClient = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
@@ -41,35 +47,9 @@ func New(workspace string, creds *config.Credentials) *Client {
 
 func (c *Client) baseURL() string {
 	if c.workspace != "" {
-		if override := os.Getenv("YHERDA_API_URL"); override != "" {
-			parsed, err := url.Parse(strings.TrimRight(override, "/"))
-			if err == nil && net.ParseIP(parsed.Hostname()) == nil {
-				// Named host: replace subdomain with active workspace.
-				// e.g. https://public.yherda.test:8000 -> https://{workspace}.yherda.test:8000
-				host := parsed.Hostname()
-				port := parsed.Port()
-				parts := strings.SplitN(host, ".", 2)
-				if len(parts) == 2 {
-					host = c.workspace + "." + parts[1]
-				} else {
-					host = c.workspace + "." + host
-				}
-				if port != "" {
-					host = host + ":" + port
-				}
-				parsed.Host = host
-				return parsed.String() + "/api"
-			}
-			// Raw IP (local test server): use URL as-is.
-			return strings.TrimRight(override, "/") + "/api"
-		}
-		return fmt.Sprintf("https://%s.a.yherda.com/api", c.workspace)
+		return fmt.Sprintf("https://%s.%s/api", c.workspace, domainRoot())
 	}
-	base := os.Getenv("YHERDA_API_URL")
-	if base == "" {
-		base = defaultAPIURL
-	}
-	return strings.TrimRight(base, "/") + "/api"
+	return fmt.Sprintf("https://public.%s/api", domainRoot())
 }
 
 func (c *Client) do(method, path string, body any) (*http.Response, error) {
