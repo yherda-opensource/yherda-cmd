@@ -32,9 +32,14 @@ func init() {
 	rootCmd.AddCommand(workspaceCmd)
 	rootCmd.AddCommand(ideasCmd)
 	rootCmd.AddCommand(projectsCmd)
-	rootCmd.AddCommand(identitiesCmd)
-	rootCmd.AddCommand(arcsCmd)
-	rootCmd.AddCommand(beatsCmd)
+	rootCmd.AddCommand(personCmd)
+	rootCmd.AddCommand(identityCmd)
+	rootCmd.AddCommand(arcCmd)
+	rootCmd.AddCommand(beatCmd)
+	rootCmd.AddCommand(placeCmd)
+	rootCmd.AddCommand(settingCmd)
+	rootCmd.AddCommand(thingCmd)
+	rootCmd.AddCommand(dispositionCmd)
 }
 
 func printJSON(v any) {

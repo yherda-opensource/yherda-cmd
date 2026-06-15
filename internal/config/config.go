@@ -8,6 +8,11 @@ import (
 
 type Config struct {
 	ActiveWorkspace string `json:"active_workspace"`
+	ActiveIdea      string `json:"active_idea,omitempty"`
+	ActivePerson    string `json:"active_person,omitempty"`
+	ActiveArc       string `json:"active_arc,omitempty"`
+	ActivePlace     string `json:"active_place,omitempty"`
+	ActiveThing     string `json:"active_thing,omitempty"`
 }
 
 type Credentials struct {
