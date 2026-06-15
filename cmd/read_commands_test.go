@@ -14,22 +14,29 @@ func TestIdeasShow_MissingArg(t *testing.T) {
 	}
 }
 
-func TestArcsShow_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"arcs", "show"})
+func TestArcUse_MissingArg(t *testing.T) {
+	rootCmd.SetArgs([]string{"arc", "use"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when id argument is missing")
 	}
 }
 
-func TestBeatsShow_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"beats", "show"})
+func TestPersonUse_MissingArg(t *testing.T) {
+	rootCmd.SetArgs([]string{"person", "use"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when id argument is missing")
 	}
 }
 
-func TestIdentitiesShow_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"identities", "show"})
+func TestPlaceUse_MissingArg(t *testing.T) {
+	rootCmd.SetArgs([]string{"place", "use"})
+	if err := rootCmd.Execute(); err == nil {
+		t.Fatal("expected error when id argument is missing")
+	}
+}
+
+func TestThingUse_MissingArg(t *testing.T) {
+	rootCmd.SetArgs([]string{"thing", "use"})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when id argument is missing")
 	}

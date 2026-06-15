@@ -12,6 +12,7 @@ import (
 )
 
 var jsonOutput bool
+var noContext bool
 
 var rootCmd = &cobra.Command{
 	Use:   "yherda",
@@ -27,14 +28,20 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Output raw JSON")
+	rootCmd.PersistentFlags().BoolVar(&noContext, "no-context", false, "Suppress context footer")
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(workspaceCmd)
 	rootCmd.AddCommand(ideasCmd)
 	rootCmd.AddCommand(projectsCmd)
-	rootCmd.AddCommand(identitiesCmd)
-	rootCmd.AddCommand(arcsCmd)
-	rootCmd.AddCommand(beatsCmd)
+	rootCmd.AddCommand(personCmd)
+	rootCmd.AddCommand(identityCmd)
+	rootCmd.AddCommand(arcCmd)
+	rootCmd.AddCommand(beatCmd)
+	rootCmd.AddCommand(placeCmd)
+	rootCmd.AddCommand(settingCmd)
+	rootCmd.AddCommand(thingCmd)
+	rootCmd.AddCommand(dispositionCmd)
 }
 
 func printJSON(v any) {
@@ -59,6 +66,45 @@ func strField(row map[string]any, key string) string {
 func fatalf(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "error: "+format+"\n", args...)
 	os.Exit(1)
+}
+
+func printContext() {
+	if noContext || jsonOutput {
+		return
+	}
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return
+	}
+	fields := []struct{ label, value string }{
+		{"workspace", cfg.ActiveWorkspace},
+		{"idea", cfg.ActiveIdea},
+		{"person", cfg.ActivePerson},
+		{"arc", cfg.ActiveArc},
+		{"place", cfg.ActivePlace},
+		{"thing", cfg.ActiveThing},
+	}
+	var parts []string
+	for _, f := range fields {
+		if f.value != "" {
+			parts = append(parts, f.label+": "+f.value)
+		}
+	}
+	if len(parts) > 0 {
+		fmt.Println()
+		fmt.Println("context: " + joinStrings(parts, " | "))
+	}
+}
+
+func joinStrings(ss []string, sep string) string {
+	result := ""
+	for i, s := range ss {
+		if i > 0 {
+			result += sep
+		}
+		result += s
+	}
+	return result
 }
 
 func mustClient() *api.Client {
