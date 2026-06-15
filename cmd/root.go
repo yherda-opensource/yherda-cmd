@@ -43,6 +43,8 @@ func init() {
 	rootCmd.AddCommand(thingCmd)
 	rootCmd.AddCommand(dispositionCmd)
 	rootCmd.AddCommand(workspaceListCmd)
+	rootCmd.AddCommand(formatCmd)
+	rootCmd.AddCommand(expressionCmd)
 }
 
 func printJSON(v any) {
