@@ -19,9 +19,8 @@ func saveContext(t *testing.T, cfg *config.Config) {
 }
 
 // saveContextWithCreds saves config and stub credentials so mustClient() doesn't os.Exit.
-// Use this in tests that expect to get past the context check (i.e. testing that a flag
-// or config value satisfies the requirement). The subsequent network call will fail, but
-// that's fine — we only care that the context error was NOT returned.
+// Use this in tests where context is satisfied and execution reaches the API call.
+// The network call will fail, but we only care that the context logic behaved correctly.
 func saveContextWithCreds(t *testing.T, cfg *config.Config) {
 	t.Helper()
 	saveContext(t, cfg)
@@ -32,16 +31,18 @@ func saveContextWithCreds(t *testing.T, cfg *config.Config) {
 	}
 }
 
-// --- person list: context resolution ---
+// --- person list ---
 
-func TestPersonList_NoIdeaContext_Error(t *testing.T) {
+func TestPersonList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	// Stub creds so mustClient() doesn't os.Exit; network call will fail but that's fine.
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"person", "list"})
+	// Should not return the old "no active idea" hard error — falls back to listing ideas.
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active idea — run: yherda ideas use <id>" {
-		t.Errorf("expected 'no active idea' error, got: %v", err)
+	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
+		t.Error("should fall back to listing ideas rather than returning a hard error")
 	}
 }
 
@@ -69,14 +70,14 @@ func TestPersonList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 // --- identity list ---
 
-func TestIdentityList_NoPersonContext_Error(t *testing.T) {
+func TestIdentityList_NoPersonContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"identity", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active person — run: yherda person use <id>" {
-		t.Errorf("expected 'no active person' error, got: %v", err)
+	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -93,14 +94,14 @@ func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 
 // --- arc list ---
 
-func TestArcList_NoPersonOrIdeaContext_Error(t *testing.T) {
+func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"arc", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active person — run: yherda person use <id>" {
-		t.Errorf("expected 'no active person' error, got: %v", err)
+	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -128,14 +129,14 @@ func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
 
 // --- beat list ---
 
-func TestBeatList_NoArcContext_Error(t *testing.T) {
+func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"beat", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active arc — run: yherda arc use <id>" {
-		t.Errorf("expected 'no active arc' error, got: %v", err)
+	if err != nil && err.Error() == "no active arc — run: yherda arc use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -152,14 +153,14 @@ func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
 
 // --- place list ---
 
-func TestPlaceList_NoIdeaContext_Error(t *testing.T) {
+func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"place", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active idea — run: yherda ideas use <id>" {
-		t.Errorf("expected 'no active idea' error, got: %v", err)
+	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -176,14 +177,14 @@ func TestPlaceList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 // --- setting list ---
 
-func TestSettingList_NoPlaceContext_Error(t *testing.T) {
+func TestSettingList_NoPlaceContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"setting", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active place — run: yherda place use <id>" {
-		t.Errorf("expected 'no active place' error, got: %v", err)
+	if err != nil && err.Error() == "no active place — run: yherda place use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -200,14 +201,14 @@ func TestSettingList_ContextPlaceUsed_NoContextError(t *testing.T) {
 
 // --- thing list ---
 
-func TestThingList_NoIdeaContext_Error(t *testing.T) {
+func TestThingList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"thing", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active idea — run: yherda ideas use <id>" {
-		t.Errorf("expected 'no active idea' error, got: %v", err)
+	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 
@@ -224,14 +225,14 @@ func TestThingList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 // --- disposition list ---
 
-func TestDispositionList_NoThingContext_Error(t *testing.T) {
+func TestDispositionList_NoThingContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws"})
+	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws"})
 
 	rootCmd.SetArgs([]string{"disposition", "list"})
 	err := rootCmd.Execute()
-	if err == nil || err.Error() != "no active thing — run: yherda thing use <id>" {
-		t.Errorf("expected 'no active thing' error, got: %v", err)
+	if err != nil && err.Error() == "no active thing — run: yherda thing use <id>" {
+		t.Error("should fall back to listing rather than returning a hard error")
 	}
 }
 

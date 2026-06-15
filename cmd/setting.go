@@ -27,7 +27,8 @@ var settingListCmd = &cobra.Command{
 			placeID = cfg.ActivePlace
 		}
 		if placeID == "" {
-			return fmt.Errorf("no active place — run: yherda place use <id>")
+			fmt.Println("No active place — showing places instead. Run 'yherda place use <id>' to select one.")
+			return placeListCmd.RunE(cmd, args)
 		}
 		client := mustClient()
 		var result []map[string]any

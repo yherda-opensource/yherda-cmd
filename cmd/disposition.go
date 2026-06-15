@@ -27,7 +27,8 @@ var dispositionListCmd = &cobra.Command{
 			thingID = cfg.ActiveThing
 		}
 		if thingID == "" {
-			return fmt.Errorf("no active thing — run: yherda thing use <id>")
+			fmt.Println("No active thing — showing things instead. Run 'yherda thing use <id>' to select one.")
+			return thingListCmd.RunE(cmd, args)
 		}
 		client := mustClient()
 		var result []map[string]any

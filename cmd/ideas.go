@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/yherda-opensource/yherda-cmd/internal/api"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -12,26 +13,29 @@ var ideasCmd = &cobra.Command{
 	Short: "Manage ideas",
 }
 
+func listIdeas(client *api.Client) error {
+	var result []map[string]any
+	if err := client.Get("/storyline/", &result); err != nil {
+		return err
+	}
+	if jsonOutput {
+		printJSON(result)
+		return nil
+	}
+	w := newTabWriter()
+	fmt.Fprintln(w, "ID\tNAME\tABSTRACT")
+	for _, row := range result {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
+	}
+	w.Flush()
+	return nil
+}
+
 var ideasListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all ideas in the active workspace",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client := mustClient()
-		var result []map[string]any
-		if err := client.Get("/storyline/", &result); err != nil {
-			return err
-		}
-		if jsonOutput {
-			printJSON(result)
-			return nil
-		}
-		w := newTabWriter()
-		fmt.Fprintln(w, "ID\tNAME\tABSTRACT")
-		for _, row := range result {
-			fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
-		}
-		w.Flush()
-		return nil
+		return listIdeas(mustClient())
 	},
 }
 

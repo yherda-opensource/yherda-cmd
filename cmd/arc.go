@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/yherda-opensource/yherda-cmd/internal/api"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -15,47 +16,60 @@ var arcCmd = &cobra.Command{
 var arcPersonID string
 var arcIdeaID string
 
+func listArcs(client *api.Client, personID string) error {
+	var result []map[string]any
+	if err := client.Get("/role/"+personID+"/arcs/", &result); err != nil {
+		return err
+	}
+	if jsonOutput {
+		printJSON(result)
+		return nil
+	}
+	w := newTabWriter()
+	fmt.Fprintln(w, "ID\tWANT")
+	for _, row := range result {
+		fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "want"))
+	}
+	w.Flush()
+	return nil
+}
+
 var arcListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List arcs for a person or idea",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var result []map[string]any
-
 		if arcIdeaID != "" {
-			// Aggregate: all arcs across all persons in an idea.
 			client := mustClient()
+			var result []map[string]any
 			if err := client.Get("/storyline/"+arcIdeaID+"/arcs/", &result); err != nil {
 				return err
 			}
-		} else {
-			personID := arcPersonID
-			if personID == "" {
-				cfg, err := config.LoadConfig()
-				if err != nil {
-					return err
-				}
-				personID = cfg.ActivePerson
+			if jsonOutput {
+				printJSON(result)
+				return nil
 			}
-			if personID == "" {
-				return fmt.Errorf("no active person — run: yherda person use <id>")
+			w := newTabWriter()
+			fmt.Fprintln(w, "ID\tWANT")
+			for _, row := range result {
+				fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "want"))
 			}
-			client := mustClient()
-			if err := client.Get("/role/"+personID+"/arcs/", &result); err != nil {
-				return err
-			}
-		}
-
-		if jsonOutput {
-			printJSON(result)
+			w.Flush()
 			return nil
 		}
-		w := newTabWriter()
-		fmt.Fprintln(w, "ID\tWANT")
-		for _, row := range result {
-			fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "want"))
+
+		personID := arcPersonID
+		if personID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			personID = cfg.ActivePerson
 		}
-		w.Flush()
-		return nil
+		if personID == "" {
+			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
+			return personListCmd.RunE(cmd, args)
+		}
+		return listArcs(mustClient(), personID)
 	},
 }
 
@@ -66,7 +80,6 @@ var arcUseCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID := args[0]
 
-		// Fetch the arc to extract its role (person) id.
 		client := mustClient()
 		var arc map[string]any
 		if err := client.Get("/arc/"+arcID+"/", &arc); err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/yherda-opensource/yherda-cmd/internal/api"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -13,6 +14,24 @@ var placeCmd = &cobra.Command{
 }
 
 var placeIdeaID string
+
+func listPlaces(client *api.Client, ideaID string) error {
+	var result []map[string]any
+	if err := client.Get("/storyline/"+ideaID+"/places/", &result); err != nil {
+		return err
+	}
+	if jsonOutput {
+		printJSON(result)
+		return nil
+	}
+	w := newTabWriter()
+	fmt.Fprintln(w, "ID\tNAME")
+	for _, row := range result {
+		fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
+	}
+	w.Flush()
+	return nil
+}
 
 var placeListCmd = &cobra.Command{
 	Use:   "list",
@@ -27,24 +46,10 @@ var placeListCmd = &cobra.Command{
 			ideaID = cfg.ActiveIdea
 		}
 		if ideaID == "" {
-			return fmt.Errorf("no active idea — run: yherda ideas use <id>")
+			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
+			return ideasListCmd.RunE(cmd, args)
 		}
-		client := mustClient()
-		var result []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/places/", &result); err != nil {
-			return err
-		}
-		if jsonOutput {
-			printJSON(result)
-			return nil
-		}
-		w := newTabWriter()
-		fmt.Fprintln(w, "ID\tNAME")
-		for _, row := range result {
-			fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
-		}
-		w.Flush()
-		return nil
+		return listPlaces(mustClient(), ideaID)
 	},
 }
 
