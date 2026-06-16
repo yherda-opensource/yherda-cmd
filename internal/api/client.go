@@ -17,10 +17,11 @@ import (
 const defaultPublicHost = "https://public.a.yherda.com"
 
 type Client struct {
-	apiServer  string
-	publicHost string
-	creds      *config.Credentials
-	http       *http.Client
+	apiServer   string
+	publicHost  string
+	creds       *config.Credentials
+	http        *http.Client
+	RefreshFunc func() (*config.Credentials, error)
 }
 
 func publicHost() string {
@@ -90,6 +91,34 @@ func (c *Client) do(method, path string, body any) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp.StatusCode == http.StatusUnauthorized && c.RefreshFunc != nil {
+		resp.Body.Close()
+		newCreds, refreshErr := c.RefreshFunc()
+		if refreshErr != nil {
+			return nil, fmt.Errorf("session expired — run 'yherda login' to re-authenticate (%w)", refreshErr)
+		}
+		c.creds = newCreds
+
+		// Retry once with the new token.
+		var retryBody io.Reader
+		if body != nil {
+			data, err := json.Marshal(body)
+			if err != nil {
+				return nil, err
+			}
+			retryBody = bytes.NewReader(data)
+		}
+		retryReq, err := http.NewRequest(method, c.baseURL()+path, retryBody)
+		if err != nil {
+			return nil, err
+		}
+		retryReq.Header.Set("Content-Type", "application/json")
+		retryReq.Header.Set("Accept", "application/json")
+		retryReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.creds.AccessToken))
+		return c.http.Do(retryReq)
+	}
+
 	return resp, nil
 }
 

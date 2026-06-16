@@ -128,6 +128,63 @@ func TestExchangeCode_ServerError(t *testing.T) {
 	}
 }
 
+func TestRefreshTokens_Success(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm() //nolint:errcheck
+		if r.FormValue("grant_type") != "refresh_token" {
+			t.Errorf("expected grant_type=refresh_token, got %q", r.FormValue("grant_type"))
+		}
+		if r.FormValue("refresh_token") != "old-refresh" {
+			t.Errorf("expected refresh_token=old-refresh, got %q", r.FormValue("refresh_token"))
+		}
+		if r.FormValue("client_id") != clientID {
+			t.Errorf("expected client_id=%q, got %q", clientID, r.FormValue("client_id"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{ //nolint:errcheck
+			"access_token":  "new-access",
+			"refresh_token": "new-refresh",
+			"token_type":    "Bearer",
+		})
+	}))
+	defer srv.Close()
+	t.Setenv("YHERDA_PUBLIC_HOST", srv.URL)
+
+	creds, err := RefreshTokens("old-refresh")
+	if err != nil {
+		t.Fatalf("RefreshTokens: %v", err)
+	}
+	if creds.AccessToken != "new-access" {
+		t.Errorf("access_token: got %q, want %q", creds.AccessToken, "new-access")
+	}
+	if creds.RefreshToken != "new-refresh" {
+		t.Errorf("refresh_token: got %q, want %q", creds.RefreshToken, "new-refresh")
+	}
+}
+
+func TestRefreshTokens_BadToken(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid_grant"}) //nolint:errcheck
+	}))
+	defer srv.Close()
+	t.Setenv("YHERDA_PUBLIC_HOST", srv.URL)
+
+	_, err := RefreshTokens("expired-refresh")
+	if err == nil {
+		t.Fatal("expected error from 400 response, got nil")
+	}
+}
+
+func TestRefreshTokens_NetworkError(t *testing.T) {
+	t.Setenv("YHERDA_PUBLIC_HOST", "http://127.0.0.1:0")
+
+	_, err := RefreshTokens("any-token")
+	if err == nil {
+		t.Fatal("expected network error, got nil")
+	}
+}
+
 func TestExchangeCode_MismatchedVerifier(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
