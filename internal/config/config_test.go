@@ -99,34 +99,3 @@ func TestCredentialsFilePermissions(t *testing.T) {
 	}
 }
 
-func TestSaveAndLoadConfig(t *testing.T) {
-	withTempHome(t)
-
-	cfg := &Config{ActiveWorkspace: "my-workspace"}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatalf("SaveConfig: %v", err)
-	}
-
-	loaded, err := LoadConfig()
-	if err != nil {
-		t.Fatalf("LoadConfig: %v", err)
-	}
-	if loaded.ActiveWorkspace != cfg.ActiveWorkspace {
-		t.Errorf("active_workspace: got %q, want %q", loaded.ActiveWorkspace, cfg.ActiveWorkspace)
-	}
-}
-
-func TestLoadConfig_Missing(t *testing.T) {
-	withTempHome(t)
-
-	cfg, err := LoadConfig()
-	if err != nil {
-		t.Fatalf("LoadConfig on missing file: %v", err)
-	}
-	if cfg == nil {
-		t.Fatal("LoadConfig returned nil for missing file")
-	}
-	if cfg.ActiveWorkspace != "" {
-		t.Errorf("expected empty workspace, got %q", cfg.ActiveWorkspace)
-	}
-}

@@ -1,205 +1,118 @@
 package config
 
-import "testing"
+import (
+	"testing"
+)
+
+func withTempDir(t *testing.T) {
+	t.Helper()
+	t.Chdir(t.TempDir())
+}
+
+func TestLoadContext_FileNotExist(t *testing.T) {
+	withTempDir(t)
+
+	ctx, err := LoadContext()
+	if err != nil {
+		t.Fatalf("LoadContext on missing file: %v", err)
+	}
+	if ctx == nil {
+		t.Fatal("LoadContext returned nil for missing file")
+	}
+	if ctx.Workspace != "" || ctx.Idea != "" {
+		t.Errorf("expected empty context, got %+v", ctx)
+	}
+}
 
 func TestSaveAndLoadContext(t *testing.T) {
-	withTempHome(t)
+	withTempDir(t)
 
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "place-1",
-		ActiveThing:     "thing-1",
+	ctx := &Context{
+		Workspace: "ws",
+		APIServer: "https://ws.example.com",
+		Idea:      "idea-1",
+		Person:    "person-1",
+		Arc:       "arc-1",
+		Place:     "place-1",
+		Thing:     "thing-1",
 	}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatalf("SaveConfig: %v", err)
+	if err := SaveContext(ctx); err != nil {
+		t.Fatalf("SaveContext: %v", err)
 	}
-	loaded, err := LoadConfig()
+	loaded, err := LoadContext()
 	if err != nil {
-		t.Fatalf("LoadConfig: %v", err)
+		t.Fatalf("LoadContext: %v", err)
 	}
-	if loaded.ActiveIdea != "idea-1" {
-		t.Errorf("active_idea: got %q", loaded.ActiveIdea)
+	if loaded.Workspace != ctx.Workspace {
+		t.Errorf("workspace: got %q, want %q", loaded.Workspace, ctx.Workspace)
 	}
-	if loaded.ActivePerson != "person-1" {
-		t.Errorf("active_person: got %q", loaded.ActivePerson)
+	if loaded.APIServer != ctx.APIServer {
+		t.Errorf("api_server: got %q, want %q", loaded.APIServer, ctx.APIServer)
 	}
-	if loaded.ActiveArc != "arc-1" {
-		t.Errorf("active_arc: got %q", loaded.ActiveArc)
+	if loaded.Idea != ctx.Idea {
+		t.Errorf("active_idea: got %q", loaded.Idea)
 	}
-	if loaded.ActivePlace != "place-1" {
-		t.Errorf("active_place: got %q", loaded.ActivePlace)
+	if loaded.Person != ctx.Person {
+		t.Errorf("active_person: got %q", loaded.Person)
 	}
-	if loaded.ActiveThing != "thing-1" {
-		t.Errorf("active_thing: got %q", loaded.ActiveThing)
+	if loaded.Arc != ctx.Arc {
+		t.Errorf("active_arc: got %q", loaded.Arc)
+	}
+	if loaded.Place != ctx.Place {
+		t.Errorf("active_place: got %q", loaded.Place)
+	}
+	if loaded.Thing != ctx.Thing {
+		t.Errorf("active_thing: got %q", loaded.Thing)
 	}
 }
 
-func TestCascadeReset_IdeaUse(t *testing.T) {
-	withTempHome(t)
+func TestLoadContext_PartialFile(t *testing.T) {
+	withTempDir(t)
 
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "old-idea",
-		ActivePerson:    "old-person",
-		ActiveArc:       "old-arc",
-		ActivePlace:     "old-place",
-		ActiveThing:     "old-thing",
+	if err := SaveContext(&Context{Workspace: "ws"}); err != nil {
+		t.Fatal(err)
 	}
-	if err := SaveConfig(cfg); err != nil {
+	loaded, err := LoadContext()
+	if err != nil {
+		t.Fatalf("LoadContext: %v", err)
+	}
+	if loaded.Workspace != "ws" {
+		t.Errorf("workspace: got %q", loaded.Workspace)
+	}
+	if loaded.Idea != "" || loaded.Person != "" {
+		t.Errorf("expected other fields empty, got %+v", loaded)
+	}
+}
+
+func TestSaveContext_CascadeReset_IdeaUse(t *testing.T) {
+	withTempDir(t)
+
+	ctx := &Context{
+		Workspace: "ws",
+		Idea:      "old-idea",
+		Person:    "old-person",
+		Arc:       "old-arc",
+		Place:     "old-place",
+		Thing:     "old-thing",
+	}
+	if err := SaveContext(ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	cfg.ActiveIdea = "new-idea"
-	cfg.ActivePerson = ""
-	cfg.ActiveArc = ""
-	cfg.ActivePlace = ""
-	cfg.ActiveThing = ""
-	if err := SaveConfig(cfg); err != nil {
+	ctx.Idea = "new-idea"
+	ctx.Person = ""
+	ctx.Arc = ""
+	ctx.Place = ""
+	ctx.Thing = ""
+	if err := SaveContext(ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	loaded, _ := LoadConfig()
-	if loaded.ActiveIdea != "new-idea" {
-		t.Errorf("active_idea: got %q", loaded.ActiveIdea)
+	loaded, _ := LoadContext()
+	if loaded.Idea != "new-idea" {
+		t.Errorf("active_idea: got %q", loaded.Idea)
 	}
-	if loaded.ActivePerson != "" || loaded.ActiveArc != "" || loaded.ActivePlace != "" || loaded.ActiveThing != "" {
+	if loaded.Person != "" || loaded.Arc != "" || loaded.Place != "" || loaded.Thing != "" {
 		t.Error("downstream context not cleared after idea use")
-	}
-}
-
-func TestCascadeReset_PersonUse(t *testing.T) {
-	withTempHome(t)
-
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "old-person",
-		ActiveArc:       "old-arc",
-		ActivePlace:     "old-place",
-		ActiveThing:     "old-thing",
-	}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg.ActivePerson = "new-person"
-	cfg.ActiveArc = ""
-	cfg.ActivePlace = ""
-	cfg.ActiveThing = ""
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	loaded, _ := LoadConfig()
-	if loaded.ActiveIdea != "idea-1" {
-		t.Errorf("active_idea should be unchanged: got %q", loaded.ActiveIdea)
-	}
-	if loaded.ActivePerson != "new-person" {
-		t.Errorf("active_person: got %q", loaded.ActivePerson)
-	}
-	if loaded.ActiveArc != "" || loaded.ActivePlace != "" || loaded.ActiveThing != "" {
-		t.Error("downstream context not cleared after person use")
-	}
-}
-
-func TestCascadeReset_ArcUse(t *testing.T) {
-	withTempHome(t)
-
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "old-arc",
-		ActivePlace:     "old-place",
-		ActiveThing:     "old-thing",
-	}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg.ActiveArc = "new-arc"
-	cfg.ActivePerson = "person-from-arc"
-	cfg.ActivePlace = ""
-	cfg.ActiveThing = ""
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	loaded, _ := LoadConfig()
-	if loaded.ActiveArc != "new-arc" {
-		t.Errorf("active_arc: got %q", loaded.ActiveArc)
-	}
-	if loaded.ActivePerson != "person-from-arc" {
-		t.Errorf("active_person: got %q", loaded.ActivePerson)
-	}
-	if loaded.ActivePlace != "" || loaded.ActiveThing != "" {
-		t.Error("downstream context not cleared after arc use")
-	}
-}
-
-func TestCascadeReset_PlaceUse(t *testing.T) {
-	withTempHome(t)
-
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "old-place",
-		ActiveThing:     "old-thing",
-	}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg.ActivePlace = "new-place"
-	cfg.ActivePerson = ""
-	cfg.ActiveArc = ""
-	cfg.ActiveThing = ""
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	loaded, _ := LoadConfig()
-	if loaded.ActivePlace != "new-place" {
-		t.Errorf("active_place: got %q", loaded.ActivePlace)
-	}
-	if loaded.ActivePerson != "" || loaded.ActiveArc != "" || loaded.ActiveThing != "" {
-		t.Error("downstream context not cleared after place use")
-	}
-}
-
-func TestCascadeReset_ThingUse(t *testing.T) {
-	withTempHome(t)
-
-	cfg := &Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "place-1",
-		ActiveThing:     "old-thing",
-	}
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg.ActiveThing = "new-thing"
-	cfg.ActivePerson = ""
-	cfg.ActiveArc = ""
-	cfg.ActivePlace = ""
-	if err := SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-
-	loaded, _ := LoadConfig()
-	if loaded.ActiveThing != "new-thing" {
-		t.Errorf("active_thing: got %q", loaded.ActiveThing)
-	}
-	if loaded.ActivePerson != "" || loaded.ActiveArc != "" || loaded.ActivePlace != "" {
-		t.Error("downstream context not cleared after thing use")
 	}
 }

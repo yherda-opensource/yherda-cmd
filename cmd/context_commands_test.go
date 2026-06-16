@@ -9,21 +9,20 @@ import (
 func withTempHome(t *testing.T) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
+	t.Chdir(t.TempDir())
 }
 
-func saveContext(t *testing.T, cfg *config.Config) {
+func saveContext(t *testing.T, ctx *config.Context) {
 	t.Helper()
-	if err := config.SaveConfig(cfg); err != nil {
+	if err := config.SaveContext(ctx); err != nil {
 		t.Fatalf("saveContext: %v", err)
 	}
 }
 
-// saveContextWithCreds saves config and stub credentials so mustClient() doesn't os.Exit.
-// Use this in tests where context is satisfied and execution reaches the API call.
-// The network call will fail, but we only care that the context logic behaved correctly.
-func saveContextWithCreds(t *testing.T, cfg *config.Config) {
+// saveContextWithCreds saves context and stub credentials so mustClient() doesn't os.Exit.
+func saveContextWithCreds(t *testing.T, ctx *config.Context) {
 	t.Helper()
-	saveContext(t, cfg)
+	saveContext(t, ctx)
 	if err := config.SaveCredentials(&config.Credentials{
 		AccessToken: "test-token", TokenType: "Bearer",
 	}); err != nil {
@@ -35,11 +34,9 @@ func saveContextWithCreds(t *testing.T, cfg *config.Config) {
 
 func TestPersonList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
 	withTempHome(t)
-	// Stub creds so mustClient() doesn't os.Exit; network call will fail but that's fine.
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"person", "list"})
-	// Should not return the old "no active idea" hard error — falls back to listing ideas.
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
 		t.Error("should fall back to listing ideas rather than returning a hard error")
@@ -48,7 +45,7 @@ func TestPersonList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
 
 func TestPersonList_FlagProvided_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"person", "list", "--idea", "some-id"})
 	err := rootCmd.Execute()
@@ -59,12 +56,12 @@ func TestPersonList_FlagProvided_NoContextError(t *testing.T) {
 
 func TestPersonList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"person", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
-		t.Error("active_idea in config should have satisfied the requirement")
+		t.Error("active idea in context should have satisfied the requirement")
 	}
 }
 
@@ -72,7 +69,7 @@ func TestPersonList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestIdentityList_NoPersonContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"identity", "list"})
 	err := rootCmd.Execute()
@@ -83,12 +80,12 @@ func TestIdentityList_NoPersonContext_FallsBack(t *testing.T) {
 
 func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
 
 	rootCmd.SetArgs([]string{"identity", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
-		t.Error("active_person in config should have satisfied the requirement")
+		t.Error("active person in context should have satisfied the requirement")
 	}
 }
 
@@ -96,7 +93,7 @@ func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 
 func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"arc", "list"})
 	err := rootCmd.Execute()
@@ -107,18 +104,18 @@ func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
 
 func TestArcList_ContextPersonUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
 
 	rootCmd.SetArgs([]string{"arc", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
-		t.Error("active_person in config should have satisfied the requirement")
+		t.Error("active person in context should have satisfied the requirement")
 	}
 }
 
 func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"arc", "list", "--idea", "idea-1"})
 	err := rootCmd.Execute()
@@ -131,7 +128,7 @@ func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
 
 func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"beat", "list"})
 	err := rootCmd.Execute()
@@ -142,12 +139,12 @@ func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
 
 func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveArc: "arc-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
 
 	rootCmd.SetArgs([]string{"beat", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active arc — run: yherda arc use <id>" {
-		t.Error("active_arc in config should have satisfied the requirement")
+		t.Error("active arc in context should have satisfied the requirement")
 	}
 }
 
@@ -155,7 +152,7 @@ func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
 
 func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"place", "list"})
 	err := rootCmd.Execute()
@@ -166,12 +163,12 @@ func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
 
 func TestPlaceList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"place", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
-		t.Error("active_idea in config should have satisfied the requirement")
+		t.Error("active idea in context should have satisfied the requirement")
 	}
 }
 
@@ -179,7 +176,7 @@ func TestPlaceList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestSettingList_NoPlaceContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"setting", "list"})
 	err := rootCmd.Execute()
@@ -190,12 +187,12 @@ func TestSettingList_NoPlaceContext_FallsBack(t *testing.T) {
 
 func TestSettingList_ContextPlaceUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePlace: "place-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Place: "place-1"})
 
 	rootCmd.SetArgs([]string{"setting", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active place — run: yherda place use <id>" {
-		t.Error("active_place in config should have satisfied the requirement")
+		t.Error("active place in context should have satisfied the requirement")
 	}
 }
 
@@ -203,7 +200,7 @@ func TestSettingList_ContextPlaceUsed_NoContextError(t *testing.T) {
 
 func TestThingList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"thing", "list"})
 	err := rootCmd.Execute()
@@ -214,12 +211,12 @@ func TestThingList_NoIdeaContext_FallsBack(t *testing.T) {
 
 func TestThingList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"thing", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
-		t.Error("active_idea in config should have satisfied the requirement")
+		t.Error("active idea in context should have satisfied the requirement")
 	}
 }
 
@@ -227,7 +224,7 @@ func TestThingList_ContextIdeaUsed_NoContextError(t *testing.T) {
 
 func TestDispositionList_NoThingContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"disposition", "list"})
 	err := rootCmd.Execute()
@@ -238,12 +235,12 @@ func TestDispositionList_NoThingContext_FallsBack(t *testing.T) {
 
 func TestDispositionList_ContextThingUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveThing: "thing-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Thing: "thing-1"})
 
 	rootCmd.SetArgs([]string{"disposition", "list"})
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active thing — run: yherda thing use <id>" {
-		t.Error("active_thing in config should have satisfied the requirement")
+		t.Error("active thing in context should have satisfied the requirement")
 	}
 }
 
@@ -251,13 +248,13 @@ func TestDispositionList_ContextThingUsed_NoContextError(t *testing.T) {
 
 func TestPersonUse_SetsPersonClearsDownstream(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "old-person",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "place-1",
-		ActiveThing:     "thing-1",
+	saveContext(t, &config.Context{
+		Workspace: "ws",
+		Idea:      "idea-1",
+		Person:    "old-person",
+		Arc:       "arc-1",
+		Place:     "place-1",
+		Thing:     "thing-1",
 	})
 
 	rootCmd.SetArgs([]string{"person", "use", "new-person"})
@@ -265,33 +262,33 @@ func TestPersonUse_SetsPersonClearsDownstream(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	loaded, _ := config.LoadConfig()
-	if loaded.ActivePerson != "new-person" {
-		t.Errorf("active_person: got %q, want %q", loaded.ActivePerson, "new-person")
+	loaded, _ := config.LoadContext()
+	if loaded.Person != "new-person" {
+		t.Errorf("active_person: got %q, want %q", loaded.Person, "new-person")
 	}
-	if loaded.ActiveIdea != "idea-1" {
-		t.Errorf("active_idea should be unchanged: got %q", loaded.ActiveIdea)
+	if loaded.Idea != "idea-1" {
+		t.Errorf("active_idea should be unchanged: got %q", loaded.Idea)
 	}
-	if loaded.ActiveArc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.ActiveArc)
+	if loaded.Arc != "" {
+		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
 	}
-	if loaded.ActivePlace != "" {
-		t.Errorf("active_place should be cleared, got %q", loaded.ActivePlace)
+	if loaded.Place != "" {
+		t.Errorf("active_place should be cleared, got %q", loaded.Place)
 	}
-	if loaded.ActiveThing != "" {
-		t.Errorf("active_thing should be cleared, got %q", loaded.ActiveThing)
+	if loaded.Thing != "" {
+		t.Errorf("active_thing should be cleared, got %q", loaded.Thing)
 	}
 }
 
 func TestPlaceUse_SetsPlaceClearsDownstream(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "old-place",
-		ActiveThing:     "thing-1",
+	saveContext(t, &config.Context{
+		Workspace: "ws",
+		Idea:      "idea-1",
+		Person:    "person-1",
+		Arc:       "arc-1",
+		Place:     "old-place",
+		Thing:     "thing-1",
 	})
 
 	rootCmd.SetArgs([]string{"place", "use", "new-place"})
@@ -299,33 +296,33 @@ func TestPlaceUse_SetsPlaceClearsDownstream(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	loaded, _ := config.LoadConfig()
-	if loaded.ActivePlace != "new-place" {
-		t.Errorf("active_place: got %q, want %q", loaded.ActivePlace, "new-place")
+	loaded, _ := config.LoadContext()
+	if loaded.Place != "new-place" {
+		t.Errorf("active_place: got %q, want %q", loaded.Place, "new-place")
 	}
-	if loaded.ActiveIdea != "idea-1" {
-		t.Errorf("active_idea should be unchanged: got %q", loaded.ActiveIdea)
+	if loaded.Idea != "idea-1" {
+		t.Errorf("active_idea should be unchanged: got %q", loaded.Idea)
 	}
-	if loaded.ActivePerson != "" {
-		t.Errorf("active_person should be cleared, got %q", loaded.ActivePerson)
+	if loaded.Person != "" {
+		t.Errorf("active_person should be cleared, got %q", loaded.Person)
 	}
-	if loaded.ActiveArc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.ActiveArc)
+	if loaded.Arc != "" {
+		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
 	}
-	if loaded.ActiveThing != "" {
-		t.Errorf("active_thing should be cleared, got %q", loaded.ActiveThing)
+	if loaded.Thing != "" {
+		t.Errorf("active_thing should be cleared, got %q", loaded.Thing)
 	}
 }
 
 func TestThingUse_SetsThingClearsDownstream(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "idea-1",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "place-1",
-		ActiveThing:     "old-thing",
+	saveContext(t, &config.Context{
+		Workspace: "ws",
+		Idea:      "idea-1",
+		Person:    "person-1",
+		Arc:       "arc-1",
+		Place:     "place-1",
+		Thing:     "old-thing",
 	})
 
 	rootCmd.SetArgs([]string{"thing", "use", "new-thing"})
@@ -333,33 +330,33 @@ func TestThingUse_SetsThingClearsDownstream(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	loaded, _ := config.LoadConfig()
-	if loaded.ActiveThing != "new-thing" {
-		t.Errorf("active_thing: got %q, want %q", loaded.ActiveThing, "new-thing")
+	loaded, _ := config.LoadContext()
+	if loaded.Thing != "new-thing" {
+		t.Errorf("active_thing: got %q, want %q", loaded.Thing, "new-thing")
 	}
-	if loaded.ActiveIdea != "idea-1" {
-		t.Errorf("active_idea should be unchanged: got %q", loaded.ActiveIdea)
+	if loaded.Idea != "idea-1" {
+		t.Errorf("active_idea should be unchanged: got %q", loaded.Idea)
 	}
-	if loaded.ActivePerson != "" {
-		t.Errorf("active_person should be cleared, got %q", loaded.ActivePerson)
+	if loaded.Person != "" {
+		t.Errorf("active_person should be cleared, got %q", loaded.Person)
 	}
-	if loaded.ActiveArc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.ActiveArc)
+	if loaded.Arc != "" {
+		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
 	}
-	if loaded.ActivePlace != "" {
-		t.Errorf("active_place should be cleared, got %q", loaded.ActivePlace)
+	if loaded.Place != "" {
+		t.Errorf("active_place should be cleared, got %q", loaded.Place)
 	}
 }
 
 func TestIdeasUse_SetsIdeaClearsAll(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{
-		ActiveWorkspace: "ws",
-		ActiveIdea:      "old-idea",
-		ActivePerson:    "person-1",
-		ActiveArc:       "arc-1",
-		ActivePlace:     "place-1",
-		ActiveThing:     "thing-1",
+	saveContext(t, &config.Context{
+		Workspace: "ws",
+		Idea:      "old-idea",
+		Person:    "person-1",
+		Arc:       "arc-1",
+		Place:     "place-1",
+		Thing:     "thing-1",
 	})
 
 	rootCmd.SetArgs([]string{"ideas", "use", "new-idea"})
@@ -367,20 +364,20 @@ func TestIdeasUse_SetsIdeaClearsAll(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	loaded, _ := config.LoadConfig()
-	if loaded.ActiveIdea != "new-idea" {
-		t.Errorf("active_idea: got %q, want %q", loaded.ActiveIdea, "new-idea")
+	loaded, _ := config.LoadContext()
+	if loaded.Idea != "new-idea" {
+		t.Errorf("active_idea: got %q, want %q", loaded.Idea, "new-idea")
 	}
-	if loaded.ActivePerson != "" {
-		t.Errorf("active_person should be cleared, got %q", loaded.ActivePerson)
+	if loaded.Person != "" {
+		t.Errorf("active_person should be cleared, got %q", loaded.Person)
 	}
-	if loaded.ActiveArc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.ActiveArc)
+	if loaded.Arc != "" {
+		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
 	}
-	if loaded.ActivePlace != "" {
-		t.Errorf("active_place should be cleared, got %q", loaded.ActivePlace)
+	if loaded.Place != "" {
+		t.Errorf("active_place should be cleared, got %q", loaded.Place)
 	}
-	if loaded.ActiveThing != "" {
-		t.Errorf("active_thing should be cleared, got %q", loaded.ActiveThing)
+	if loaded.Thing != "" {
+		t.Errorf("active_thing should be cleared, got %q", loaded.Thing)
 	}
 }

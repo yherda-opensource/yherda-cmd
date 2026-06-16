@@ -40,18 +40,18 @@ var placeListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := placeIdeaID
 		if ideaID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			ideaID = cfg.ActiveIdea
+			ideaID = ctx.Idea
 		}
 		if ideaID == "" {
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
 			return ideasListCmd.RunE(cmd, args)
 		}
 		if cmd.Flags().Changed("idea") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActiveIdea = id }, ideaID)
+			useParent(func(ctx *config.Context, id string) { ctx.Idea = id }, ideaID)
 		}
 		return listPlaces(mustClient(), ideaID)
 	},
@@ -62,15 +62,15 @@ var placeUseCmd = &cobra.Command{
 	Short: "Set the active place",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.LoadConfig()
+		ctx, err := config.LoadContext()
 		if err != nil {
 			return err
 		}
-		cfg.ActivePlace = args[0]
-		cfg.ActivePerson = ""
-		cfg.ActiveArc = ""
-		cfg.ActiveThing = ""
-		if err := config.SaveConfig(cfg); err != nil {
+		ctx.Place = args[0]
+		ctx.Person = ""
+		ctx.Arc = ""
+		ctx.Thing = ""
+		if err := config.SaveContext(ctx); err != nil {
 			return err
 		}
 		fmt.Printf("Active place set to %s\n", args[0])
@@ -84,11 +84,11 @@ var placeCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			ideaID = cfg.ActiveIdea
+			ideaID = ctx.Idea
 		}
 		if ideaID == "" {
 			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
@@ -103,16 +103,16 @@ var placeCreateCmd = &cobra.Command{
 			return err
 		}
 		if id := strField(result, "id"); id != "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			cfg.ActiveIdea = ideaID
-			cfg.ActivePlace = id
-			cfg.ActivePerson = ""
-			cfg.ActiveArc = ""
-			cfg.ActiveThing = ""
-			_ = config.SaveConfig(cfg)
+			ctx.Idea = ideaID
+			ctx.Place = id
+			ctx.Person = ""
+			ctx.Arc = ""
+			ctx.Thing = ""
+			_ = config.SaveContext(ctx)
 		}
 		printJSON(result)
 		return nil

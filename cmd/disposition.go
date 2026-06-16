@@ -20,11 +20,11 @@ var dispositionListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		thingID := dispositionThingID
 		if thingID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			thingID = cfg.ActiveThing
+			thingID = ctx.Thing
 		}
 		if thingID == "" {
 			fmt.Println("No active thing — showing things instead. Run 'yherda thing use <id>' to select one.")

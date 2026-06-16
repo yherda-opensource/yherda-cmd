@@ -10,7 +10,7 @@ import (
 
 func TestIdentityCreate_MissingName_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
 
 	rootCmd.SetArgs([]string{"identity", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -20,7 +20,7 @@ func TestIdentityCreate_MissingName_Error(t *testing.T) {
 
 func TestIdentityCreate_NoPersonNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"identity", "create", "--name", "Hero"})
 	if err := rootCmd.Execute(); err == nil {
@@ -30,11 +30,10 @@ func TestIdentityCreate_NoPersonNoContext_Error(t *testing.T) {
 
 func TestIdentityCreate_ContextPerson_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
 
 	rootCmd.SetArgs([]string{"identity", "create", "--name", "Hero"})
 	err := rootCmd.Execute()
-	// network call will fail; we only verify it didn't fail due to missing context
 	if err != nil && (err.Error() == "--person is required (or set active person with 'yherda person use <id>')" ||
 		err.Error() == "--name is required") {
 		t.Errorf("context should have satisfied requirements, got: %v", err)
@@ -45,7 +44,7 @@ func TestIdentityCreate_ContextPerson_ReachesAPI(t *testing.T) {
 
 func TestArcCreate_MissingWant_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePerson: "person-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
 
 	rootCmd.SetArgs([]string{"arc", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -55,7 +54,7 @@ func TestArcCreate_MissingWant_Error(t *testing.T) {
 
 func TestArcCreate_NoPersonNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"arc", "create", "--want", "To find the truth"})
 	if err := rootCmd.Execute(); err == nil {
@@ -67,7 +66,7 @@ func TestArcCreate_NoPersonNoContext_Error(t *testing.T) {
 
 func TestBeatCreate_MissingDescription_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveArc: "arc-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
 
 	rootCmd.SetArgs([]string{"beat", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -77,7 +76,7 @@ func TestBeatCreate_MissingDescription_Error(t *testing.T) {
 
 func TestBeatCreate_NoArcNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"beat", "create", "--description", "The call to adventure"})
 	if err := rootCmd.Execute(); err == nil {
@@ -87,7 +86,7 @@ func TestBeatCreate_NoArcNoContext_Error(t *testing.T) {
 
 func TestBeatCreate_ContextArc_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveArc: "arc-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
 
 	rootCmd.SetArgs([]string{"beat", "create", "--description", "The call to adventure"})
 	err := rootCmd.Execute()
@@ -101,7 +100,7 @@ func TestBeatCreate_ContextArc_ReachesAPI(t *testing.T) {
 
 func TestPlaceCreate_MissingName_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"place", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -111,7 +110,7 @@ func TestPlaceCreate_MissingName_Error(t *testing.T) {
 
 func TestPlaceCreate_NoIdeaNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"place", "create", "--name", "The Forest"})
 	if err := rootCmd.Execute(); err == nil {
@@ -121,7 +120,7 @@ func TestPlaceCreate_NoIdeaNoContext_Error(t *testing.T) {
 
 func TestPlaceCreate_ContextIdea_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"place", "create", "--name", "The Forest"})
 	err := rootCmd.Execute()
@@ -135,7 +134,7 @@ func TestPlaceCreate_ContextIdea_ReachesAPI(t *testing.T) {
 
 func TestSettingCreate_MissingName_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePlace: "place-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Place: "place-1"})
 
 	rootCmd.SetArgs([]string{"setting", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -145,7 +144,7 @@ func TestSettingCreate_MissingName_Error(t *testing.T) {
 
 func TestSettingCreate_NoPlaceNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"setting", "create", "--name", "The Tavern"})
 	if err := rootCmd.Execute(); err == nil {
@@ -155,7 +154,7 @@ func TestSettingCreate_NoPlaceNoContext_Error(t *testing.T) {
 
 func TestSettingCreate_ContextPlace_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActivePlace: "place-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Place: "place-1"})
 
 	rootCmd.SetArgs([]string{"setting", "create", "--name", "The Tavern"})
 	err := rootCmd.Execute()
@@ -169,7 +168,7 @@ func TestSettingCreate_ContextPlace_ReachesAPI(t *testing.T) {
 
 func TestThingCreate_MissingName_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"thing", "create"})
 	if err := rootCmd.Execute(); err == nil {
@@ -179,7 +178,7 @@ func TestThingCreate_MissingName_Error(t *testing.T) {
 
 func TestThingCreate_NoIdeaNoContext_Error(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"thing", "create", "--name", "The Sword"})
 	if err := rootCmd.Execute(); err == nil {
@@ -189,7 +188,7 @@ func TestThingCreate_NoIdeaNoContext_Error(t *testing.T) {
 
 func TestThingCreate_ContextIdea_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"thing", "create", "--name", "The Sword"})
 	err := rootCmd.Execute()

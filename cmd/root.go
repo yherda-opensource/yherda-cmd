@@ -76,17 +76,17 @@ func printContext() {
 	if noContext || jsonOutput {
 		return
 	}
-	cfg, err := config.LoadConfig()
+	ctx, err := config.LoadContext()
 	if err != nil {
 		return
 	}
 	fields := []struct{ label, value string }{
-		{"workspace", cfg.ActiveWorkspace},
-		{"idea", cfg.ActiveIdea},
-		{"person", cfg.ActivePerson},
-		{"arc", cfg.ActiveArc},
-		{"place", cfg.ActivePlace},
-		{"thing", cfg.ActiveThing},
+		{"workspace", ctx.Workspace},
+		{"idea", ctx.Idea},
+		{"person", ctx.Person},
+		{"arc", ctx.Arc},
+		{"place", ctx.Place},
+		{"thing", ctx.Thing},
 	}
 	var parts []string
 	for _, f := range fields {
@@ -111,15 +111,16 @@ func joinStrings(ss []string, sep string) string {
 	return result
 }
 
-// useParent persists a parent id to config when it was supplied explicitly on
-// the command line. Pass a setter that writes the id into the config struct.
-func useParent(set func(*config.Config, string), id string) {
-	cfg, err := config.LoadConfig()
+// useParent persists a parent id to the working directory context when it was
+// supplied explicitly on the command line. Pass a setter that writes the id
+// into the context struct.
+func useParent(set func(*config.Context, string), id string) {
+	ctx, err := config.LoadContext()
 	if err != nil {
 		return
 	}
-	set(cfg, id)
-	_ = config.SaveConfig(cfg)
+	set(ctx, id)
+	_ = config.SaveContext(ctx)
 }
 
 func mustPublicClient() *api.Client {
@@ -141,15 +142,15 @@ func mustClient() *api.Client {
 	if creds == nil {
 		fatalf("not logged in — run 'yherda login' first")
 	}
-	cfg, err := config.LoadConfig()
+	ctx, err := config.LoadContext()
 	if err != nil {
-		fatalf("failed to load config: %v", err)
+		fatalf("failed to load context: %v", err)
 	}
-	if cfg.ActiveWorkspace == "" {
+	if ctx.Workspace == "" {
 		fatalf("no active workspace — run 'yherda workspace <slug>'")
 	}
-	if cfg.APIServer == "" {
+	if ctx.APIServer == "" {
 		fatalf("no API server configured — run 'yherda workspace <slug>' to reconfigure")
 	}
-	return api.New(cfg.APIServer, creds)
+	return api.New(ctx.APIServer, creds)
 }

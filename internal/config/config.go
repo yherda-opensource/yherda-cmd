@@ -6,23 +6,13 @@ import (
 	"path/filepath"
 )
 
-type Config struct {
-	ActiveWorkspace string `json:"active_workspace"`
-	APIServer       string `json:"api_server,omitempty"`
-	ActiveIdea      string `json:"active_idea,omitempty"`
-	ActivePerson    string `json:"active_person,omitempty"`
-	ActiveArc       string `json:"active_arc,omitempty"`
-	ActivePlace     string `json:"active_place,omitempty"`
-	ActiveThing     string `json:"active_thing,omitempty"`
-}
-
 type Credentials struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
 }
 
-func dir() (string, error) {
+func credentialsDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -34,40 +24,8 @@ func dir() (string, error) {
 	return d, nil
 }
 
-func LoadConfig() (*Config, error) {
-	d, err := dir()
-	if err != nil {
-		return nil, err
-	}
-	path := filepath.Join(d, "config.json")
-	data, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return &Config{}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
-
-func SaveConfig(cfg *Config) error {
-	d, err := dir()
-	if err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(d, "config.json"), data, 0600)
-}
-
 func LoadCredentials() (*Credentials, error) {
-	d, err := dir()
+	d, err := credentialsDir()
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +45,7 @@ func LoadCredentials() (*Credentials, error) {
 }
 
 func SaveCredentials(creds *Credentials) error {
-	d, err := dir()
+	d, err := credentialsDir()
 	if err != nil {
 		return err
 	}
@@ -99,7 +57,7 @@ func SaveCredentials(creds *Credentials) error {
 }
 
 func DeleteCredentials() error {
-	d, err := dir()
+	d, err := credentialsDir()
 	if err != nil {
 		return err
 	}

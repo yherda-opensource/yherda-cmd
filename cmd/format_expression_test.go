@@ -33,7 +33,7 @@ func TestExpressionPrint_MissingArg(t *testing.T) {
 // expression list falls back to idea list when no context is set
 func TestExpressionList_NoIdeaContext_FallsBack(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"expression", "list"})
 	err := rootCmd.Execute()
@@ -45,7 +45,7 @@ func TestExpressionList_NoIdeaContext_FallsBack(t *testing.T) {
 // expression list uses --idea flag when no active idea is set
 func TestExpressionList_IdeaFlagProvided_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"expression", "list", "--idea", "some-id"})
 	err := rootCmd.Execute()
@@ -57,7 +57,7 @@ func TestExpressionList_IdeaFlagProvided_NoContextError(t *testing.T) {
 // expression list uses active idea from context
 func TestExpressionList_ContextIdeaUsed_NoContextError(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"expression", "list"})
 	err := rootCmd.Execute()
