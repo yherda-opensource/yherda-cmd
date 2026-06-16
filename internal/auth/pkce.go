@@ -170,6 +170,47 @@ func exchangeCode(code, verifier, redirectURI string) (*config.Credentials, erro
 	}, nil
 }
 
+func RefreshTokens(refreshToken string) (*config.Credentials, error) {
+	form := url.Values{
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {refreshToken},
+		"client_id":     {clientID},
+	}
+
+	req, err := http.NewRequest(http.MethodPost, baseURL()+"/oauth/token/", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errBody map[string]any
+		json.NewDecoder(resp.Body).Decode(&errBody) //nolint:errcheck
+		return nil, fmt.Errorf("token refresh failed (%d): %v", resp.StatusCode, errBody)
+	}
+
+	var tok struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		TokenType    string `json:"token_type"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+		return nil, err
+	}
+
+	return &config.Credentials{
+		AccessToken:  tok.AccessToken,
+		RefreshToken: tok.RefreshToken,
+		TokenType:    tok.TokenType,
+	}, nil
+}
+
 func makePKCEPair() (verifier, challenge string, err error) {
 	buf := make([]byte, 48)
 	if _, err = rand.Read(buf); err != nil {

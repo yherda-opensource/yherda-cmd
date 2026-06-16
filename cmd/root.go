@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yherda-opensource/yherda-cmd/internal/api"
+	"github.com/yherda-opensource/yherda-cmd/internal/auth"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -123,6 +124,20 @@ func useParent(set func(*config.Context, string), id string) {
 	_ = config.SaveContext(ctx)
 }
 
+func makeRefreshFunc(creds *config.Credentials) func() (*config.Credentials, error) {
+	return func() (*config.Credentials, error) {
+		newCreds, err := auth.RefreshTokens(creds.RefreshToken)
+		if err != nil {
+			return nil, err
+		}
+		if err := config.SaveCredentials(newCreds); err != nil {
+			return nil, err
+		}
+		*creds = *newCreds
+		return newCreds, nil
+	}
+}
+
 func mustPublicClient() *api.Client {
 	creds, err := config.LoadCredentials()
 	if err != nil {
@@ -131,7 +146,9 @@ func mustPublicClient() *api.Client {
 	if creds == nil {
 		fatalf("not logged in — run 'yherda login' first")
 	}
-	return api.NewPublic(creds)
+	c := api.NewPublic(creds)
+	c.RefreshFunc = makeRefreshFunc(creds)
+	return c
 }
 
 func mustClient() *api.Client {
@@ -152,5 +169,7 @@ func mustClient() *api.Client {
 	if ctx.APIServer == "" {
 		fatalf("no API server configured — run 'yherda workspace <slug>' to reconfigure")
 	}
-	return api.New(ctx.APIServer, creds)
+	c := api.New(ctx.APIServer, creds)
+	c.RefreshFunc = makeRefreshFunc(creds)
+	return c
 }
