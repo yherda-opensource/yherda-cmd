@@ -54,6 +54,9 @@ var beatListCmd = &cobra.Command{
 			fmt.Println("No active arc — showing arcs instead. Run 'yherda arc use <id>' to select one.")
 			return arcListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("arc") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActiveArc = id }, arcID)
+		}
 		return listBeats(mustClient(), arcID)
 	},
 }
@@ -72,6 +75,9 @@ var beatCreateCmd = &cobra.Command{
 		}
 		if arcID == "" {
 			return fmt.Errorf("--arc is required (or set active arc with 'yherda arc use <id>')")
+		}
+		if cmd.Flags().Changed("arc") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActiveArc = id }, arcID)
 		}
 		description, _ := cmd.Flags().GetString("description")
 		if description == "" {

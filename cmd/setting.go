@@ -30,6 +30,9 @@ var settingListCmd = &cobra.Command{
 			fmt.Println("No active place — showing places instead. Run 'yherda place use <id>' to select one.")
 			return placeListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("place") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePlace = id }, placeID)
+		}
 		client := mustClient()
 		var result []map[string]any
 		if err := client.Get("/place/"+placeID+"/settings/", &result); err != nil {
@@ -68,6 +71,9 @@ var settingCreateCmd = &cobra.Command{
 		}
 		if placeID == "" {
 			return fmt.Errorf("--place is required (or set active place with 'yherda place use <id>')")
+		}
+		if cmd.Flags().Changed("place") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePlace = id }, placeID)
 		}
 		name, _ := cmd.Flags().GetString("name")
 		if name == "" {

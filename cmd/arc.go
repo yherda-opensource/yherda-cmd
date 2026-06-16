@@ -71,6 +71,9 @@ var arcListCmd = &cobra.Command{
 			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
 			return personListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+		}
 		return listArcs(mustClient(), personID)
 	},
 }
@@ -120,6 +123,9 @@ var arcCreateCmd = &cobra.Command{
 		}
 		if personID == "" {
 			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
+		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
 		}
 		want, _ := cmd.Flags().GetString("want")
 		if want == "" {

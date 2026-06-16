@@ -50,6 +50,9 @@ var placeListCmd = &cobra.Command{
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
 			return ideasListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("idea") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActiveIdea = id }, ideaID)
+		}
 		return listPlaces(mustClient(), ideaID)
 	},
 }
@@ -104,6 +107,7 @@ var placeCreateCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
+			cfg.ActiveIdea = ideaID
 			cfg.ActivePlace = id
 			cfg.ActivePerson = ""
 			cfg.ActiveArc = ""

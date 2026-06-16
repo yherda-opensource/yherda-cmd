@@ -111,6 +111,17 @@ func joinStrings(ss []string, sep string) string {
 	return result
 }
 
+// useParent persists a parent id to config when it was supplied explicitly on
+// the command line. Pass a setter that writes the id into the config struct.
+func useParent(set func(*config.Config, string), id string) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return
+	}
+	set(cfg, id)
+	_ = config.SaveConfig(cfg)
+}
+
 func mustPublicClient() *api.Client {
 	creds, err := config.LoadCredentials()
 	if err != nil {
