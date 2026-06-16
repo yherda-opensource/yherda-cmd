@@ -54,7 +54,38 @@ var settingListCmd = &cobra.Command{
 	},
 }
 
+var settingCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new setting for a place",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		placeID, _ := cmd.Flags().GetString("place")
+		if placeID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			placeID = cfg.ActivePlace
+		}
+		if placeID == "" {
+			return fmt.Errorf("--place is required (or set active place with 'yherda place use <id>')")
+		}
+		name, _ := cmd.Flags().GetString("name")
+		if name == "" {
+			return fmt.Errorf("--name is required")
+		}
+		client := mustClient()
+		var result map[string]any
+		if err := client.Post("/place/"+placeID+"/settings/", map[string]string{"name": name}, &result); err != nil {
+			return err
+		}
+		printJSON(result)
+		return nil
+	},
+}
+
 func init() {
 	settingListCmd.Flags().StringVar(&settingPlaceID, "place", "", "Place ID (overrides active context)")
-	settingCmd.AddCommand(settingListCmd)
+	settingCreateCmd.Flags().String("place", "", "Place ID (overrides active context)")
+	settingCreateCmd.Flags().String("name", "", "Name of the setting (required)")
+	settingCmd.AddCommand(settingListCmd, settingCreateCmd)
 }

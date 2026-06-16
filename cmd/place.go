@@ -75,7 +75,38 @@ var placeUseCmd = &cobra.Command{
 	},
 }
 
+var placeCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new place for an idea",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ideaID, _ := cmd.Flags().GetString("idea")
+		if ideaID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			ideaID = cfg.ActiveIdea
+		}
+		if ideaID == "" {
+			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
+		}
+		name, _ := cmd.Flags().GetString("name")
+		if name == "" {
+			return fmt.Errorf("--name is required")
+		}
+		client := mustClient()
+		var result map[string]any
+		if err := client.Post("/storyline/"+ideaID+"/places/", map[string]string{"name": name}, &result); err != nil {
+			return err
+		}
+		printJSON(result)
+		return nil
+	},
+}
+
 func init() {
 	placeListCmd.Flags().StringVar(&placeIdeaID, "idea", "", "Idea ID (overrides active context)")
-	placeCmd.AddCommand(placeListCmd, placeUseCmd)
+	placeCreateCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
+	placeCreateCmd.Flags().String("name", "", "Name of the place (required)")
+	placeCmd.AddCommand(placeListCmd, placeUseCmd, placeCreateCmd)
 }
