@@ -15,6 +15,8 @@ import (
 var jsonOutput bool
 var noContext bool
 
+var version = "dev"
+
 var rootCmd = &cobra.Command{
 	Use:   "yherda",
 	Short: "Command line interface for Yherda",
@@ -30,6 +32,7 @@ you rarely need to pass IDs by hand once you've set context.
 
 Every command supports --json for raw, pipeable output — handy for scripts,
 and for AI agents that want to drive Yherda directly.`,
+	Version: version,
 }
 
 func Execute() {

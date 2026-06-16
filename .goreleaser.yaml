@@ -1,0 +1,52 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: yherda
+    main: ./main.go
+    binary: yherda
+    ldflags:
+      - -s -w -X github.com/yherda-opensource/yherda-cmd/cmd.version={{.Version}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: yherda
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: sha256sums.txt
+  algorithm: sha256
+
+release:
+  github:
+    owner: yherda-opensource
+    name: yherda-cmd
+
+brews:
+  - name: yherda
+    repository:
+      owner: yherda-opensource
+      name: homebrew-yherda
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/yherda-opensource/yherda-cmd
+    description: Command line interface for Yherda
+    license: MIT
+    install: |
+      bin.install "yherda"
+    test: |
+      system "#{bin}/yherda", "--version"

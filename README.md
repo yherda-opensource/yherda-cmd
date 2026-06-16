@@ -8,6 +8,21 @@ For end-user documentation (installing, getting started, common workflows),
 see [doc.yherda.com](https://doc.yherda.com). This README is for people
 working on the CLI itself.
 
+## Installation
+
+### macOS (Homebrew)
+
+```
+brew tap yherda-opensource/yherda
+brew install yherda
+```
+
+### Linux / Windows
+
+Download the binary for your platform from the
+[GitHub Releases](https://github.com/yherda-opensource/yherda-cmd/releases) page,
+extract the archive, and add the binary to your `PATH`.
+
 ## Source layout
 
 | Path | Responsibility |
@@ -70,3 +85,14 @@ Existing resource files (`cmd/person.go`, `cmd/place.go`, `cmd/thing.go`, etc.) 
 5. Register the new top-level command in `cmd/root.go`'s `init()`.
 
 Following this pattern keeps every resource consistent and means a new contributor (or an agent) can infer how an unfamiliar command works from any other one.
+
+## Releasing
+
+Push a version tag to trigger goreleaser:
+
+```
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+goreleaser builds binaries for all platforms, creates a GitHub Release, and updates the Homebrew tap formula automatically.
