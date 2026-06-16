@@ -9,7 +9,6 @@ import (
 	"github.com/yherda-opensource/yherda-cmd/internal/export"
 )
 
-
 var expressionCmd = &cobra.Command{
 	Use:   "expression",
 	Short: "Manage expressions",

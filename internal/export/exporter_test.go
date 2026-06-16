@@ -44,15 +44,17 @@ func TestFormats_List(t *testing.T) {
 func TestBuildTree_Nested(t *testing.T) {
 	raw := []map[string]any{
 		{
-			"type_name":    "Act",
-			"number":       "1",
-			"segment_data": "",
+			"type_name": "Act",
+			"number":    "1",
+			"data":      []any{},
 			"children": []any{
 				map[string]any{
-					"type_name":    "Scene",
-					"number":       "1",
-					"segment_data": "Hello world",
-					"children":     []any{},
+					"type_name": "Scene",
+					"number":    "1",
+					"data": []any{
+						map[string]any{"plugin": "writer", "segment_data": "Hello world"},
+					},
+					"children": []any{},
 				},
 			},
 		},
@@ -76,5 +78,44 @@ func TestBuildTree_Empty(t *testing.T) {
 	tree := BuildTree(nil)
 	if len(tree) != 0 {
 		t.Errorf("expected empty tree, got %d nodes", len(tree))
+	}
+}
+
+func TestBuildTree_PicksWriterPluginAmongMultiple(t *testing.T) {
+	raw := []map[string]any{
+		{
+			"type_name": "Scene",
+			"number":    "1",
+			"data": []any{
+				map[string]any{"plugin": "editor", "segment_data": "Editor notes"},
+				map[string]any{"plugin": "writer", "segment_data": "Writer prose"},
+			},
+		},
+	}
+	tree := BuildTree(raw)
+	if len(tree) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(tree))
+	}
+	if tree[0].Content != "Writer prose" {
+		t.Errorf("expected writer plugin's content, got %q", tree[0].Content)
+	}
+}
+
+func TestBuildTree_NoMatchingPlugin(t *testing.T) {
+	raw := []map[string]any{
+		{
+			"type_name": "Scene",
+			"number":    "1",
+			"data": []any{
+				map[string]any{"plugin": "editor", "segment_data": "Editor notes"},
+			},
+		},
+	}
+	tree := BuildTree(raw)
+	if len(tree) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(tree))
+	}
+	if tree[0].Content != "" {
+		t.Errorf("expected empty content when writer plugin absent, got %q", tree[0].Content)
 	}
 }

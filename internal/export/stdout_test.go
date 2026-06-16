@@ -79,4 +79,3 @@ func TestStdoutExport_EmptyTree(t *testing.T) {
 		t.Errorf("expected no output for empty tree, got %q", out)
 	}
 }
-
