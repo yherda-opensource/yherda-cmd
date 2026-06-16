@@ -71,6 +71,9 @@ var arcListCmd = &cobra.Command{
 			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
 			return personListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+		}
 		return listArcs(mustClient(), personID)
 	},
 }
@@ -106,8 +109,42 @@ var arcUseCmd = &cobra.Command{
 	},
 }
 
+var arcCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new arc for a person",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		personID, _ := cmd.Flags().GetString("person")
+		if personID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			personID = cfg.ActivePerson
+		}
+		if personID == "" {
+			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
+		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+		}
+		want, _ := cmd.Flags().GetString("want")
+		if want == "" {
+			return fmt.Errorf("--want is required")
+		}
+		client := mustClient()
+		var result map[string]any
+		if err := client.Post("/role/"+personID+"/arcs/", map[string]string{"want": want}, &result); err != nil {
+			return err
+		}
+		printJSON(result)
+		return nil
+	},
+}
+
 func init() {
 	arcListCmd.Flags().StringVar(&arcPersonID, "person", "", "Person (role) ID (overrides active context)")
 	arcListCmd.Flags().StringVar(&arcIdeaID, "idea", "", "Idea ID — lists all arcs across all persons")
-	arcCmd.AddCommand(arcListCmd, arcUseCmd)
+	arcCreateCmd.Flags().String("person", "", "Person (role) ID (overrides active context)")
+	arcCreateCmd.Flags().String("want", "", "Want statement for the arc (required)")
+	arcCmd.AddCommand(arcListCmd, arcUseCmd, arcCreateCmd)
 }

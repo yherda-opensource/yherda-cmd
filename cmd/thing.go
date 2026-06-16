@@ -50,6 +50,9 @@ var thingListCmd = &cobra.Command{
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
 			return ideasListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("idea") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActiveIdea = id }, ideaID)
+		}
 		return listThings(mustClient(), ideaID)
 	},
 }
@@ -75,7 +78,50 @@ var thingUseCmd = &cobra.Command{
 	},
 }
 
+var thingCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new thing for an idea",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ideaID, _ := cmd.Flags().GetString("idea")
+		if ideaID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			ideaID = cfg.ActiveIdea
+		}
+		if ideaID == "" {
+			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
+		}
+		name, _ := cmd.Flags().GetString("name")
+		if name == "" {
+			return fmt.Errorf("--name is required")
+		}
+		client := mustClient()
+		var result map[string]any
+		if err := client.Post("/storyline/"+ideaID+"/things/", map[string]string{"name": name}, &result); err != nil {
+			return err
+		}
+		if id := strField(result, "id"); id != "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			cfg.ActiveIdea = ideaID
+			cfg.ActiveThing = id
+			cfg.ActivePerson = ""
+			cfg.ActiveArc = ""
+			cfg.ActivePlace = ""
+			_ = config.SaveConfig(cfg)
+		}
+		printJSON(result)
+		return nil
+	},
+}
+
 func init() {
 	thingListCmd.Flags().StringVar(&thingIdeaID, "idea", "", "Idea ID (overrides active context)")
-	thingCmd.AddCommand(thingListCmd, thingUseCmd)
+	thingCreateCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
+	thingCreateCmd.Flags().String("name", "", "Name of the thing (required)")
+	thingCmd.AddCommand(thingListCmd, thingUseCmd, thingCreateCmd)
 }

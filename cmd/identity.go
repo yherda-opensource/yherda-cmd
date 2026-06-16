@@ -50,11 +50,48 @@ var identityListCmd = &cobra.Command{
 			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
 			return personListCmd.RunE(cmd, args)
 		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+		}
 		return listIdentities(mustClient(), personID)
+	},
+}
+
+var identityCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new identity for a person",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		personID, _ := cmd.Flags().GetString("person")
+		if personID == "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			personID = cfg.ActivePerson
+		}
+		if personID == "" {
+			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
+		}
+		if cmd.Flags().Changed("person") {
+			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+		}
+		name, _ := cmd.Flags().GetString("name")
+		if name == "" {
+			return fmt.Errorf("--name is required")
+		}
+		client := mustClient()
+		var result map[string]any
+		if err := client.Post("/role/"+personID+"/identities/", map[string]string{"name": name}, &result); err != nil {
+			return err
+		}
+		printJSON(result)
+		return nil
 	},
 }
 
 func init() {
 	identityListCmd.Flags().StringVar(&identityPersonID, "person", "", "Person (role) ID (overrides active context)")
-	identityCmd.AddCommand(identityListCmd)
+	identityCreateCmd.Flags().String("person", "", "Person (role) ID (overrides active context)")
+	identityCreateCmd.Flags().String("name", "", "Name of the identity (required)")
+	identityCmd.AddCommand(identityListCmd, identityCreateCmd)
 }
