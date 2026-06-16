@@ -10,6 +10,7 @@ import (
 var dispositionCmd = &cobra.Command{
 	Use:   "disposition",
 	Short: "Manage dispositions",
+	Long:  "A disposition is the state of a thing at a particular point in your story. Dispositions belong to a thing.",
 }
 
 var dispositionThingID string
@@ -17,6 +18,9 @@ var dispositionThingID string
 var dispositionListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List dispositions for a thing",
+	Long:  "Lists dispositions for a thing. Uses the active thing unless --thing is passed.",
+	Example: `  yherda disposition list
+  yherda disposition list --thing 5`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		thingID := dispositionThingID
 		if thingID == "" {

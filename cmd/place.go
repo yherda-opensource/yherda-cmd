@@ -11,6 +11,7 @@ import (
 var placeCmd = &cobra.Command{
 	Use:   "place",
 	Short: "Manage places",
+	Long:  "A place is a physical or notional location in your story. Places hold settings (a specific configuration of a place at a point in time) and belong to an idea.",
 }
 
 var placeIdeaID string
@@ -37,6 +38,9 @@ func listPlaces(client *api.Client, ideaID string) error {
 var placeListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List places for an idea",
+	Long:  "Lists places for an idea. Uses the active idea unless --idea is passed.",
+	Example: `  yherda place list
+  yherda place list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := placeIdeaID
 		if ideaID == "" {
@@ -58,9 +62,11 @@ var placeListCmd = &cobra.Command{
 }
 
 var placeUseCmd = &cobra.Command{
-	Use:   "use <id>",
-	Short: "Set the active place",
-	Args:  cobra.ExactArgs(1),
+	Use:     "use <id>",
+	Short:   "Set the active place",
+	Long:    "Sets the active place. Clears any active person/arc/thing, since those aren't scoped under a place.",
+	Example: `  yherda place use 12`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := config.LoadContext()
 		if err != nil {
@@ -79,8 +85,10 @@ var placeUseCmd = &cobra.Command{
 }
 
 var placeCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new place for an idea",
+	Use:     "create",
+	Short:   "Create a new place for an idea",
+	Long:    "Creates a new place for an idea and sets it active. Uses the active idea unless --idea is passed.",
+	Example: `  yherda place create --name "The Lighthouse" --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {

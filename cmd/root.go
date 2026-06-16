@@ -18,7 +18,18 @@ var noContext bool
 var rootCmd = &cobra.Command{
 	Use:   "yherda",
 	Short: "Command line interface for Yherda",
-	Long:  "A fully functioning, tenant-aware CLI for Yherda. Pipeable JSON output for agent and script use.",
+	Long: `yherda brings your Yherda ideas, identities, arcs, and beats into the
+terminal — and into whatever else you already work in. Script your workflow,
+wire it into an editor or build pipeline, or just work faster without leaving
+the keyboard.
+
+Run 'yherda <command> --help' for details on any command. Most commands
+operate on an active workspace/idea/person/arc/place/thing, set via the
+'use' subcommands and stored in a .yherda file in the current directory, so
+you rarely need to pass IDs by hand once you've set context.
+
+Every command supports --json for raw, pipeable output — handy for scripts,
+and for AI agents that want to drive Yherda directly.`,
 }
 
 func Execute() {

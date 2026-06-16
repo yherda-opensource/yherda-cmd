@@ -10,6 +10,7 @@ import (
 var settingCmd = &cobra.Command{
 	Use:   "setting",
 	Short: "Manage settings",
+	Long:  "A setting is a specific configuration of a place — how it looks or feels at a particular point in your story. Settings belong to a place.",
 }
 
 var settingPlaceID string
@@ -17,6 +18,9 @@ var settingPlaceID string
 var settingListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List settings for a place",
+	Long:  "Lists settings for a place. Uses the active place unless --place is passed.",
+	Example: `  yherda setting list
+  yherda setting list --place 12`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		placeID := settingPlaceID
 		if placeID == "" {
@@ -58,8 +62,10 @@ var settingListCmd = &cobra.Command{
 }
 
 var settingCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new setting for a place",
+	Use:     "create",
+	Short:   "Create a new setting for a place",
+	Long:    "Creates a new setting for a place. Uses the active place unless --place is passed.",
+	Example: `  yherda setting create --name "Storm-lashed" --place 12`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		placeID, _ := cmd.Flags().GetString("place")
 		if placeID == "" {

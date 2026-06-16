@@ -9,11 +9,13 @@ import (
 var projectsCmd = &cobra.Command{
 	Use:   "projects",
 	Short: "Manage projects",
+	Long:  "A project links a writing project template to its content template — the dashboard view of a piece of writing in progress, with phase status.",
 }
 
 var projectsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all projects",
+	Use:     "list",
+	Short:   "List all projects",
+	Example: `  yherda projects list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result []map[string]any
@@ -35,9 +37,10 @@ var projectsListCmd = &cobra.Command{
 }
 
 var projectsShowCmd = &cobra.Command{
-	Use:   "show <id>",
-	Short: "Show a single project",
-	Args:  cobra.ExactArgs(1),
+	Use:     "show <id>",
+	Short:   "Show a single project",
+	Example: `  yherda projects show 3`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result map[string]any
