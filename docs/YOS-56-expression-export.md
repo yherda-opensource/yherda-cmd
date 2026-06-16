@@ -69,3 +69,13 @@ Segment → Scrivener mapping:
 - `Type` is derived, never declared — calculated from `(hasContent, hasChildren)`
 - Output path collision check — error if `--output` already exists
 - Registry, not switch — adding a new format is one file + one registry entry
+
+## Plugin Data Layers (YOS-67)
+
+Segment content is plugin-scoped: each segment can carry one `SegmentData` row
+per plugin (e.g. `writer`). The API returns all plugins' data for a segment as
+a `data` array — `BuildTree` (`internal/export/exporter.go`) picks the
+`writer` plugin's entry, hardcoded via the `defaultPlugin` constant. Only one
+plugin exists today; a `--plugin` flag (threading a plugin name down to
+`BuildTree`) will replace the constant once a second plugin exists to design
+the UX against.

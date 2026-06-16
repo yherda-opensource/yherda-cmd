@@ -9,7 +9,6 @@ import (
 	"github.com/yherda-opensource/yherda-cmd/internal/export"
 )
 
-
 var expressionCmd = &cobra.Command{
 	Use:   "expression",
 	Short: "Manage expressions",
@@ -47,7 +46,7 @@ var expressionListCmd = &cobra.Command{
 		for _, row := range result {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 				strField(row, "id"),
-				strField(row, "template"),
+				strField(row, "template_name"),
 				strField(row, "language"),
 				strField(row, "created"),
 			)
@@ -73,7 +72,7 @@ var expressionShowCmd = &cobra.Command{
 			return nil
 		}
 		w := newTabWriter()
-		for _, key := range []string{"id", "idea", "template", "language", "created"} {
+		for _, key := range []string{"id", "idea", "template", "template_name", "language", "created"} {
 			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
 		}
 		w.Flush()

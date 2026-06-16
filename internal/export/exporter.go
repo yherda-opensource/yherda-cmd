@@ -42,15 +42,26 @@ func Formats() []string {
 	return names
 }
 
+// defaultPlugin is the SegmentData layer BuildTree reads content from. Each
+// segment can carry one SegmentData row per plugin (writer today; an
+// editor/co-writer plugin later) — this is hardcoded until a second plugin
+// exists to design a --plugin flag against.
+const defaultPlugin = "writer"
+
 // BuildTree converts the raw JSON segment list (as returned by the API) into
-// a []SegmentNode, preserving the nested children structure.
+// a []SegmentNode, preserving the nested children structure. Content is read
+// from the defaultPlugin's entry in each segment's "data" array.
 func BuildTree(segs []map[string]any) []SegmentNode {
+	return buildTreeForPlugin(segs, defaultPlugin)
+}
+
+func buildTreeForPlugin(segs []map[string]any, plugin string) []SegmentNode {
 	nodes := make([]SegmentNode, 0, len(segs))
 	for _, seg := range segs {
 		node := SegmentNode{
 			TypeName: strField(seg, "type_name"),
 			Number:   strField(seg, "number"),
-			Content:  strField(seg, "segment_data"),
+			Content:  contentForPlugin(seg, plugin),
 		}
 		if children, ok := seg["children"].([]any); ok {
 			var childMaps []map[string]any
@@ -59,11 +70,30 @@ func BuildTree(segs []map[string]any) []SegmentNode {
 					childMaps = append(childMaps, m)
 				}
 			}
-			node.Children = BuildTree(childMaps)
+			node.Children = buildTreeForPlugin(childMaps, plugin)
 		}
 		nodes = append(nodes, node)
 	}
 	return nodes
+}
+
+// contentForPlugin returns the segment_data content for the given plugin's
+// entry in a segment's "data" array, or "" if no such entry exists.
+func contentForPlugin(seg map[string]any, plugin string) string {
+	data, ok := seg["data"].([]any)
+	if !ok {
+		return ""
+	}
+	for _, entry := range data {
+		m, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		if strField(m, "plugin") == plugin {
+			return strField(m, "segment_data")
+		}
+	}
+	return ""
 }
 
 func strField(row map[string]any, key string) string {

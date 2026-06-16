@@ -50,6 +50,11 @@ the workspace's API server.`,
 			}
 			ctx.Workspace = wsName
 			ctx.APIServer = apiServer
+			ctx.Idea = ""
+			ctx.Person = ""
+			ctx.Arc = ""
+			ctx.Place = ""
+			ctx.Thing = ""
 			if err := config.SaveContext(ctx); err != nil {
 				return fmt.Errorf("failed to save context: %w", err)
 			}
