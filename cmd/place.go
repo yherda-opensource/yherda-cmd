@@ -99,6 +99,17 @@ var placeCreateCmd = &cobra.Command{
 		if err := client.Post("/storyline/"+ideaID+"/places/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
+		if id := strField(result, "id"); id != "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			cfg.ActivePlace = id
+			cfg.ActivePerson = ""
+			cfg.ActiveArc = ""
+			cfg.ActiveThing = ""
+			_ = config.SaveConfig(cfg)
+		}
 		printJSON(result)
 		return nil
 	},

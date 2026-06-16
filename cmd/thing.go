@@ -99,6 +99,17 @@ var thingCreateCmd = &cobra.Command{
 		if err := client.Post("/storyline/"+ideaID+"/things/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
+		if id := strField(result, "id"); id != "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			cfg.ActiveThing = id
+			cfg.ActivePerson = ""
+			cfg.ActiveArc = ""
+			cfg.ActivePlace = ""
+			_ = config.SaveConfig(cfg)
+		}
 		printJSON(result)
 		return nil
 	},

@@ -76,6 +76,18 @@ var ideasCreateCmd = &cobra.Command{
 		if err := client.Post("/storyline/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
+		if id := strField(result, "id"); id != "" {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return err
+			}
+			cfg.ActiveIdea = id
+			cfg.ActivePerson = ""
+			cfg.ActiveArc = ""
+			cfg.ActivePlace = ""
+			cfg.ActiveThing = ""
+			_ = config.SaveConfig(cfg)
+		}
 		printJSON(result)
 		return nil
 	},
