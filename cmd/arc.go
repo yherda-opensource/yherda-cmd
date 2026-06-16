@@ -11,6 +11,7 @@ import (
 var arcCmd = &cobra.Command{
 	Use:   "arc",
 	Short: "Manage arcs",
+	Long:  "An arc is a person's want and the sequence of beats that pursue it. Arcs belong to a person.",
 }
 
 var arcPersonID string
@@ -38,6 +39,10 @@ func listArcs(client *api.Client, personID string) error {
 var arcListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List arcs for a person or idea",
+	Long:  "Lists arcs for a person (default, using the active person unless --person is passed) or, with --idea, every arc across every person in that idea.",
+	Example: `  yherda arc list
+  yherda arc list --person 7
+  yherda arc list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if arcIdeaID != "" {
 			client := mustClient()
@@ -79,9 +84,11 @@ var arcListCmd = &cobra.Command{
 }
 
 var arcUseCmd = &cobra.Command{
-	Use:   "use <id>",
-	Short: "Set the active arc",
-	Args:  cobra.ExactArgs(1),
+	Use:     "use <id>",
+	Short:   "Set the active arc",
+	Long:    "Sets the active arc, and the active person to whichever person owns it. Clears any active place/thing.",
+	Example: `  yherda arc use 9`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID := args[0]
 
@@ -110,8 +117,10 @@ var arcUseCmd = &cobra.Command{
 }
 
 var arcCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new arc for a person",
+	Use:     "create",
+	Short:   "Create a new arc for a person",
+	Long:    "Creates a new arc for a person. Uses the active person unless --person is passed.",
+	Example: `  yherda arc create --want "to be believed" --person 7`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID, _ := cmd.Flags().GetString("person")
 		if personID == "" {

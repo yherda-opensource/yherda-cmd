@@ -11,6 +11,7 @@ import (
 var identityCmd = &cobra.Command{
 	Use:   "identity",
 	Short: "Manage identities",
+	Long:  "An identity is a belief system a person holds in your story — the lens they see through, which can shift over an arc. Identities belong to a person.",
 }
 
 var identityPersonID string
@@ -37,6 +38,9 @@ func listIdentities(client *api.Client, personID string) error {
 var identityListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List identities for a person",
+	Long:  "Lists identities for a person. Uses the active person unless --person is passed.",
+	Example: `  yherda identity list
+  yherda identity list --person 7`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID := identityPersonID
 		if personID == "" {
@@ -58,8 +62,10 @@ var identityListCmd = &cobra.Command{
 }
 
 var identityCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new identity for a person",
+	Use:     "create",
+	Short:   "Create a new identity for a person",
+	Long:    "Creates a new identity for a person. Uses the active person unless --person is passed.",
+	Example: `  yherda identity create --name "The Skeptic" --person 7`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID, _ := cmd.Flags().GetString("person")
 		if personID == "" {

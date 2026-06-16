@@ -11,7 +11,13 @@ import (
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authenticate with Yherda via OAuth2",
-	Long:  "Opens a browser to authenticate with Yherda. Stores the token in ~/.yherdacmd/credentials.json.",
+	Long: `Opens a browser to authenticate with Yherda using OAuth2 PKCE. Once you
+approve the login, the resulting token is stored in
+~/.yherdacmd/credentials.json and used automatically (and refreshed
+automatically) by every other command.
+
+Run this once per machine before doing anything else with the CLI.`,
+	Example: `  yherda login`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		creds, err := auth.Login()
 		if err != nil {
@@ -26,8 +32,10 @@ var loginCmd = &cobra.Command{
 }
 
 var logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Remove stored Yherda credentials",
+	Use:     "logout",
+	Short:   "Remove stored Yherda credentials",
+	Long:    "Deletes ~/.yherdacmd/credentials.json. You'll need to 'yherda login' again before running any other command.",
+	Example: `  yherda logout`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := config.DeleteCredentials(); err != nil {
 			return fmt.Errorf("failed to remove credentials: %w", err)

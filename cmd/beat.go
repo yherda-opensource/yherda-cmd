@@ -11,6 +11,7 @@ import (
 var beatCmd = &cobra.Command{
 	Use:   "beat",
 	Short: "Manage beats",
+	Long:  "A beat is a single story moment within an arc — one step toward (or away from) the person's want. Beats belong to an arc.",
 }
 
 var beatArcID string
@@ -41,6 +42,9 @@ func listBeats(client *api.Client, arcID string) error {
 var beatListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List beats for an arc",
+	Long:  "Lists beats for an arc, in sequence order. Uses the active arc unless --arc is passed.",
+	Example: `  yherda beat list
+  yherda beat list --arc 9`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID := beatArcID
 		if arcID == "" {
@@ -62,8 +66,10 @@ var beatListCmd = &cobra.Command{
 }
 
 var beatCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new beat for an arc",
+	Use:     "create",
+	Short:   "Create a new beat for an arc",
+	Long:    "Creates a new beat for an arc. Uses the active arc unless --arc is passed.",
+	Example: `  yherda beat create --description "She finds the letter" --arc 9`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID, _ := cmd.Flags().GetString("arc")
 		if arcID == "" {

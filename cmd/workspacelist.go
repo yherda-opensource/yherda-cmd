@@ -9,7 +9,10 @@ import (
 var workspaceListCmd = &cobra.Command{
 	Use:   "workspacelist",
 	Short: "List all workspaces available to the authenticated user",
+	Long:  "Lists every workspace your account has access to. Use 'yherda workspace <name>' to make one of them active.",
 	Args:  cobra.NoArgs,
+	Example: `  yherda workspacelist
+  yherda workspacelist --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustPublicClient()
 		var result []map[string]any

@@ -11,6 +11,7 @@ import (
 var personCmd = &cobra.Command{
 	Use:   "person",
 	Short: "Manage persons (roles)",
+	Long:  "A person is a role in your story — the slot a character fills. Persons hold identities (which can change) and arcs. Persons belong to an idea.",
 }
 
 var personIdeaID string
@@ -37,6 +38,9 @@ func listPersons(client *api.Client, ideaID string) error {
 var personListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List persons (roles) for an idea",
+	Long:  "Lists persons for an idea. Uses the active idea unless --idea is passed.",
+	Example: `  yherda person list
+  yherda person list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := personIdeaID
 		if ideaID == "" {
@@ -58,9 +62,11 @@ var personListCmd = &cobra.Command{
 }
 
 var personUseCmd = &cobra.Command{
-	Use:   "use <id>",
-	Short: "Set the active person (role)",
-	Args:  cobra.ExactArgs(1),
+	Use:     "use <id>",
+	Short:   "Set the active person (role)",
+	Long:    "Sets the active person. Clears any active arc/place/thing, since those belong to a specific person.",
+	Example: `  yherda person use 7`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := config.LoadContext()
 		if err != nil {
@@ -79,8 +85,10 @@ var personUseCmd = &cobra.Command{
 }
 
 var personCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new person for an idea",
+	Use:     "create",
+	Short:   "Create a new person for an idea",
+	Long:    "Creates a new person for an idea and sets it active. Uses the active idea unless --idea is passed.",
+	Example: `  yherda person create --name "Detective Marlowe" --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {

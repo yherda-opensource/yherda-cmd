@@ -11,6 +11,7 @@ import (
 var thingCmd = &cobra.Command{
 	Use:   "thing",
 	Short: "Manage things",
+	Long:  "A thing is a notable object in your story. Things hold dispositions (their state at a point in the story) and belong to an idea.",
 }
 
 var thingIdeaID string
@@ -37,6 +38,9 @@ func listThings(client *api.Client, ideaID string) error {
 var thingListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List things for an idea",
+	Long:  "Lists things for an idea. Uses the active idea unless --idea is passed.",
+	Example: `  yherda thing list
+  yherda thing list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := thingIdeaID
 		if ideaID == "" {
@@ -58,9 +62,11 @@ var thingListCmd = &cobra.Command{
 }
 
 var thingUseCmd = &cobra.Command{
-	Use:   "use <id>",
-	Short: "Set the active thing",
-	Args:  cobra.ExactArgs(1),
+	Use:     "use <id>",
+	Short:   "Set the active thing",
+	Long:    "Sets the active thing. Clears any active person/arc/place, since those aren't scoped under a thing.",
+	Example: `  yherda thing use 5`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := config.LoadContext()
 		if err != nil {
@@ -79,8 +85,10 @@ var thingUseCmd = &cobra.Command{
 }
 
 var thingCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new thing for an idea",
+	Use:     "create",
+	Short:   "Create a new thing for an idea",
+	Long:    "Creates a new thing for an idea and sets it active. Uses the active idea unless --idea is passed.",
+	Example: `  yherda thing create --name "The Letter" --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {

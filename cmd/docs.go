@@ -28,11 +28,13 @@ func readContent(cmd *cobra.Command) (string, error) {
 var docsCmd = &cobra.Command{
 	Use:   "doc",
 	Short: "Manage idea documents",
+	Long:  "An idea document is a freeform note attached to an idea — for research, worldbuilding, or anything outside the structured story model. Documents belong to an idea. (Not to be confused with this CLI's own documentation — see the project README and doc.yherda.com for that.)",
 }
 
 var docsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List documents for an idea",
+	Use:     "list",
+	Short:   "List documents for an idea",
+	Example: `  yherda doc list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {
@@ -68,9 +70,10 @@ var docsListCmd = &cobra.Command{
 }
 
 var docsShowCmd = &cobra.Command{
-	Use:   "show <doc-id>",
-	Short: "Show a document's content",
-	Args:  cobra.ExactArgs(1),
+	Use:     "show <doc-id>",
+	Short:   "Show a document's content",
+	Example: `  yherda doc show 19`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result map[string]any
@@ -89,6 +92,9 @@ var docsShowCmd = &cobra.Command{
 var docsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new document for an idea",
+	Long:  "Creates a new document under an idea. Reads body content from --file, or from stdin if --file is omitted.",
+	Example: `  yherda doc create --idea 42 --title "Worldbuilding notes" --file notes.md
+  cat notes.md | yherda doc create --idea 42 --title "Worldbuilding notes"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {
@@ -116,7 +122,10 @@ var docsCreateCmd = &cobra.Command{
 var docsUpdateCmd = &cobra.Command{
 	Use:   "update <doc-id>",
 	Short: "Update a document's content",
-	Args:  cobra.ExactArgs(1),
+	Long:  "Replaces a document's body. Reads from --file, or from stdin if --file is omitted.",
+	Example: `  yherda doc update 19 --file revised-notes.md
+  cat revised-notes.md | yherda doc update 19`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		body, err := readContent(cmd)
 		if err != nil {

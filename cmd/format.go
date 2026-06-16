@@ -9,11 +9,13 @@ import (
 var formatCmd = &cobra.Command{
 	Use:   "format",
 	Short: "Manage expression formats",
+	Long:  "An expression format defines the segment types and structure an expression template can use — e.g. a screenplay format with scene/action/dialogue segment types.",
 }
 
 var formatListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all expression formats",
+	Use:     "list",
+	Short:   "List all expression formats",
+	Example: `  yherda format list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result []map[string]any
@@ -41,9 +43,10 @@ var formatListCmd = &cobra.Command{
 }
 
 var formatShowCmd = &cobra.Command{
-	Use:   "show <id>",
-	Short: "Show an expression format and its segment types",
-	Args:  cobra.ExactArgs(1),
+	Use:     "show <id>",
+	Short:   "Show an expression format and its segment types",
+	Example: `  yherda format show 2`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result map[string]any

@@ -15,8 +15,14 @@ var workspaceCmd = &cobra.Command{
 
 The workspace name and its API server are looked up from your account and
 stored in .yherda in the current directory. All subsequent API calls route to
-the workspace's API server.`,
+the workspace's API server.
+
+Switching workspaces clears the active idea/person/arc/place/thing context,
+since those are scoped to a workspace. Run 'yherda workspacelist' to see
+which workspaces are available to you.`,
 	Args: cobra.MaximumNArgs(1),
+	Example: `  yherda workspace
+  yherda workspace acme-publishing`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := config.LoadContext()
 		if err != nil {

@@ -12,6 +12,7 @@ import (
 var expressionCmd = &cobra.Command{
 	Use:   "expression",
 	Short: "Manage expressions",
+	Long:  "An expression is an idea rendered into a specific template — the manuscript, screenplay, or one-sheet you actually export and read. Expressions belong to an idea.",
 }
 
 var expressionIdeaID string
@@ -19,6 +20,9 @@ var expressionIdeaID string
 var expressionListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List expressions for an idea",
+	Long:  "Lists expressions for an idea, showing each one's template name. Uses the active idea unless --idea is passed.",
+	Example: `  yherda expression list
+  yherda expression list --idea 42`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := expressionIdeaID
 		if ideaID == "" {
@@ -58,9 +62,10 @@ var expressionListCmd = &cobra.Command{
 }
 
 var expressionShowCmd = &cobra.Command{
-	Use:   "show <id>",
-	Short: "Show an expression",
-	Args:  cobra.ExactArgs(1),
+	Use:     "show <id>",
+	Short:   "Show an expression",
+	Example: `  yherda expression show 4`,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result map[string]any
@@ -84,7 +89,10 @@ var expressionShowCmd = &cobra.Command{
 var expressionPrintCmd = &cobra.Command{
 	Use:   "print <id>",
 	Short: "Print expression content in reading order (equivalent to export --format stdout)",
-	Args:  cobra.ExactArgs(1),
+	Long:  "Walks the expression's segment tree in reading order and prints each segment's content. A quick way to read a draft without exporting a file.",
+	Example: `  yherda expression print 4
+  yherda expression print 4 --json`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		roots, _, err := fetchSegmentTree(args[0])
 		if err != nil {
@@ -132,6 +140,11 @@ var (
 var expressionExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export an expression to a file format",
+	Long: `Exports an expression's segment tree to a file in the given format.
+Output defaults to <expression-id>.<ext> in the current directory unless
+--output is passed.`,
+	Example: `  yherda expression export --expression 4 --format scriv
+  yherda expression export --expression 4 --format scriv --output draft.scrivx`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if exportFormat == "" {
 			return fmt.Errorf("--format is required (available: %s)", strings.Join(export.Formats(), ", "))
