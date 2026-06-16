@@ -44,18 +44,18 @@ var beatListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID := beatArcID
 		if arcID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			arcID = cfg.ActiveArc
+			arcID = ctx.Arc
 		}
 		if arcID == "" {
 			fmt.Println("No active arc — showing arcs instead. Run 'yherda arc use <id>' to select one.")
 			return arcListCmd.RunE(cmd, args)
 		}
 		if cmd.Flags().Changed("arc") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActiveArc = id }, arcID)
+			useParent(func(ctx *config.Context, id string) { ctx.Arc = id }, arcID)
 		}
 		return listBeats(mustClient(), arcID)
 	},
@@ -67,17 +67,17 @@ var beatCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		arcID, _ := cmd.Flags().GetString("arc")
 		if arcID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			arcID = cfg.ActiveArc
+			arcID = ctx.Arc
 		}
 		if arcID == "" {
 			return fmt.Errorf("--arc is required (or set active arc with 'yherda arc use <id>')")
 		}
 		if cmd.Flags().Changed("arc") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActiveArc = id }, arcID)
+			useParent(func(ctx *config.Context, id string) { ctx.Arc = id }, arcID)
 		}
 		description, _ := cmd.Flags().GetString("description")
 		if description == "" {

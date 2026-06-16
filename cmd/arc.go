@@ -61,18 +61,18 @@ var arcListCmd = &cobra.Command{
 
 		personID := arcPersonID
 		if personID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			personID = cfg.ActivePerson
+			personID = ctx.Person
 		}
 		if personID == "" {
 			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
 			return personListCmd.RunE(cmd, args)
 		}
 		if cmd.Flags().Changed("person") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+			useParent(func(ctx *config.Context, id string) { ctx.Person = id }, personID)
 		}
 		return listArcs(mustClient(), personID)
 	},
@@ -91,17 +91,17 @@ var arcUseCmd = &cobra.Command{
 			return err
 		}
 
-		cfg, err := config.LoadConfig()
+		ctx, err := config.LoadContext()
 		if err != nil {
 			return err
 		}
-		cfg.ActiveArc = arcID
+		ctx.Arc = arcID
 		if roleID := strField(arc, "role"); roleID != "" {
-			cfg.ActivePerson = roleID
+			ctx.Person = roleID
 		}
-		cfg.ActivePlace = ""
-		cfg.ActiveThing = ""
-		if err := config.SaveConfig(cfg); err != nil {
+		ctx.Place = ""
+		ctx.Thing = ""
+		if err := config.SaveContext(ctx); err != nil {
 			return err
 		}
 		fmt.Printf("Active arc set to %s\n", arcID)
@@ -115,17 +115,17 @@ var arcCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID, _ := cmd.Flags().GetString("person")
 		if personID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			personID = cfg.ActivePerson
+			personID = ctx.Person
 		}
 		if personID == "" {
 			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
 		}
 		if cmd.Flags().Changed("person") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+			useParent(func(ctx *config.Context, id string) { ctx.Person = id }, personID)
 		}
 		want, _ := cmd.Flags().GetString("want")
 		if want == "" {

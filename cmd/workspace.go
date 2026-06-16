@@ -14,20 +14,20 @@ var workspaceCmd = &cobra.Command{
 	Long: `Show the active workspace (no argument) or set it by name.
 
 The workspace name and its API server are looked up from your account and
-stored in ~/.yherdacmd/config.json. All subsequent API calls route to the
-workspace's API server.`,
+stored in .yherda in the current directory. All subsequent API calls route to
+the workspace's API server.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.LoadConfig()
+		ctx, err := config.LoadContext()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("failed to load context: %w", err)
 		}
 
 		if len(args) == 0 {
-			if cfg.ActiveWorkspace == "" {
+			if ctx.Workspace == "" {
 				fmt.Println("No active workspace set. Run: yherda workspace <name>")
 			} else {
-				fmt.Printf("Active workspace: %s\nAPI Endpoint:     %s\n", cfg.ActiveWorkspace, cfg.APIServer)
+				fmt.Printf("Active workspace: %s\nAPI Endpoint:     %s\n", ctx.Workspace, ctx.APIServer)
 			}
 			return nil
 		}
@@ -48,10 +48,10 @@ workspace's API server.`,
 			if apiServer == "" {
 				return fmt.Errorf("workspace %q has no api_server — contact support", wsName)
 			}
-			cfg.ActiveWorkspace = wsName
-			cfg.APIServer = apiServer
-			if err := config.SaveConfig(cfg); err != nil {
-				return fmt.Errorf("failed to save config: %w", err)
+			ctx.Workspace = wsName
+			ctx.APIServer = apiServer
+			if err := config.SaveContext(ctx); err != nil {
+				return fmt.Errorf("failed to save context: %w", err)
 			}
 			fmt.Printf("Active workspace: %s\nAPI Endpoint:     %s\n", wsName, apiServer)
 			return nil

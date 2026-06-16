@@ -21,11 +21,11 @@ var expressionListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID := expressionIdeaID
 		if ideaID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			ideaID = cfg.ActiveIdea
+			ideaID = ctx.Idea
 		}
 		if ideaID == "" {
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda idea use <id>' to select one.")

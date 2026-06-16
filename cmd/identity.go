@@ -40,18 +40,18 @@ var identityListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID := identityPersonID
 		if personID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			personID = cfg.ActivePerson
+			personID = ctx.Person
 		}
 		if personID == "" {
 			fmt.Println("No active person — showing persons instead. Run 'yherda person use <id>' to select one.")
 			return personListCmd.RunE(cmd, args)
 		}
 		if cmd.Flags().Changed("person") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+			useParent(func(ctx *config.Context, id string) { ctx.Person = id }, personID)
 		}
 		return listIdentities(mustClient(), personID)
 	},
@@ -63,17 +63,17 @@ var identityCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		personID, _ := cmd.Flags().GetString("person")
 		if personID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			personID = cfg.ActivePerson
+			personID = ctx.Person
 		}
 		if personID == "" {
 			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
 		}
 		if cmd.Flags().Changed("person") {
-			useParent(func(cfg *config.Config, id string) { cfg.ActivePerson = id }, personID)
+			useParent(func(ctx *config.Context, id string) { ctx.Person = id }, personID)
 		}
 		name, _ := cmd.Flags().GetString("name")
 		if name == "" {

@@ -27,7 +27,7 @@ func TestDocsUpdate_MissingArg(t *testing.T) {
 // TestDocsList_NoIdeaContext verifies that doc list fails with no --idea and no active context.
 func TestDocsList_NoIdeaContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"doc", "list"})
 	err := rootCmd.Execute()
@@ -42,7 +42,7 @@ func TestDocsList_NoIdeaContext(t *testing.T) {
 // TestDocsList_ContextIdeaUsed verifies that doc list uses active idea from context.
 func TestDocsList_ContextIdeaUsed(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000", ActiveIdea: "idea-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
 
 	rootCmd.SetArgs([]string{"doc", "list"})
 	err := rootCmd.Execute()
@@ -54,7 +54,7 @@ func TestDocsList_ContextIdeaUsed(t *testing.T) {
 // TestDocsCreate_MissingIdeaFlag verifies that docs create fails without --idea.
 func TestDocsCreate_MissingIdeaFlag(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"doc", "create", "--title", "My Doc"})
 	err := rootCmd.Execute()
@@ -70,7 +70,7 @@ func TestDocsCreate_MissingIdeaFlag(t *testing.T) {
 // Note: --idea must also be provided so we reach the --title check.
 func TestDocsCreate_MissingTitleFlag(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	// Reset flag state from previous tests in this package.
 	docsCreateCmd.Flags().Set("idea", "idea-1")
@@ -93,7 +93,7 @@ func TestDocsCreate_MissingTitleFlag(t *testing.T) {
 // TestDocsCreate_MissingFile verifies that docs create fails when --file path doesn't exist.
 func TestDocsCreate_MissingFile(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"doc", "create", "--idea", "idea-1", "--title", "My Doc", "--file", "/nonexistent/path.md"})
 	if err := rootCmd.Execute(); err == nil {
@@ -104,7 +104,7 @@ func TestDocsCreate_MissingFile(t *testing.T) {
 // TestDocsUpdate_MissingFile verifies that docs update fails when --file path doesn't exist.
 func TestDocsUpdate_MissingFile(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Config{ActiveWorkspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
 
 	rootCmd.SetArgs([]string{"doc", "update", "doc-1", "--file", "/nonexistent/path.md"})
 	if err := rootCmd.Execute(); err == nil {

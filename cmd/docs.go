@@ -36,11 +36,11 @@ var docsListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ideaID, _ := cmd.Flags().GetString("idea")
 		if ideaID == "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			ideaID = cfg.ActiveIdea
+			ideaID = ctx.Idea
 		}
 		if ideaID == "" {
 			return fmt.Errorf("no active idea — run 'yherda ideas use <id>' or pass --idea")

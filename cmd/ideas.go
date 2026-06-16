@@ -77,16 +77,16 @@ var ideasCreateCmd = &cobra.Command{
 			return err
 		}
 		if id := strField(result, "id"); id != "" {
-			cfg, err := config.LoadConfig()
+			ctx, err := config.LoadContext()
 			if err != nil {
 				return err
 			}
-			cfg.ActiveIdea = id
-			cfg.ActivePerson = ""
-			cfg.ActiveArc = ""
-			cfg.ActivePlace = ""
-			cfg.ActiveThing = ""
-			_ = config.SaveConfig(cfg)
+			ctx.Idea = id
+			ctx.Person = ""
+			ctx.Arc = ""
+			ctx.Place = ""
+			ctx.Thing = ""
+			_ = config.SaveContext(ctx)
 		}
 		printJSON(result)
 		return nil
@@ -98,16 +98,16 @@ var ideasUseCmd = &cobra.Command{
 	Short: "Set the active idea",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.LoadConfig()
+		ctx, err := config.LoadContext()
 		if err != nil {
 			return err
 		}
-		cfg.ActiveIdea = args[0]
-		cfg.ActivePerson = ""
-		cfg.ActiveArc = ""
-		cfg.ActivePlace = ""
-		cfg.ActiveThing = ""
-		if err := config.SaveConfig(cfg); err != nil {
+		ctx.Idea = args[0]
+		ctx.Person = ""
+		ctx.Arc = ""
+		ctx.Place = ""
+		ctx.Thing = ""
+		if err := config.SaveContext(ctx); err != nil {
 			return err
 		}
 		fmt.Printf("Active idea set to %s\n", args[0])
