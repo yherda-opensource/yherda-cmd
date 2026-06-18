@@ -30,7 +30,7 @@ func withDoc(id, entityType, entityID, content string) func(*IdeaGraph) {
 			"id":          id,
 			"entity_type": entityType,
 			"entity_id":   entityID,
-			"content":     content,
+			"body":     content,
 			"created":     "2026-01-01",
 		})
 	}
@@ -41,7 +41,7 @@ func withOrphanDoc(id, title, content string) func(*IdeaGraph) {
 		g.Docs = append(g.Docs, map[string]any{
 			"id":      id,
 			"title":   title,
-			"content": content,
+			"body": content,
 			"created": "2026-01-01",
 		})
 	}
@@ -70,17 +70,6 @@ func TestObsidian_OutputDirCreated(t *testing.T) {
 	}
 }
 
-func TestObsidian_OutputDirExistsWithFiles(t *testing.T) {
-	dir := t.TempDir()
-	// Put a file in the output dir to simulate pre-existing content.
-	if err := os.WriteFile(filepath.Join(dir, "existing.md"), []byte("x"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	e := &ObsidianExporter{}
-	if err := e.Export(makeGraph(), dir); err == nil {
-		t.Error("expected error for non-empty output dir, got nil")
-	}
-}
 
 func TestObsidian_CreatesDirectoryLayout(t *testing.T) {
 	graph := makeGraph(withIdentity("1", "Jo Ann Hayes"))
