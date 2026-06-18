@@ -30,7 +30,7 @@ func withDoc(id, entityType, entityID, content string) func(*IdeaGraph) {
 			"id":          id,
 			"entity_type": entityType,
 			"entity_id":   entityID,
-			"content":     content,
+			"body":     content,
 			"created":     "2026-01-01",
 		})
 	}
@@ -41,7 +41,7 @@ func withOrphanDoc(id, title, content string) func(*IdeaGraph) {
 		g.Docs = append(g.Docs, map[string]any{
 			"id":      id,
 			"title":   title,
-			"content": content,
+			"body": content,
 			"created": "2026-01-01",
 		})
 	}

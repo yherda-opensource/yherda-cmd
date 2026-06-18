@@ -134,7 +134,7 @@ func (o *ObsidianExporter) Export(graph IdeaGraph, output string) error {
 			"id":      strField(doc, "id"),
 			"created": strField(doc, "created"),
 		}
-		body := strField(doc, "content")
+		body := strField(doc, "body")
 		if err := writeMarkdown(filepath.Join(orphanDir, filename), fm, body); err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func buildDocIndex(docs []map[string]any) map[string]map[string]any {
 // docBodyForEntity returns the content from the IdeaDocument attached to an entity, or "".
 func docBodyForEntity(idx map[string]map[string]any, entityType, entityID string) string {
 	if doc, ok := idx[entityType+":"+entityID]; ok {
-		return strField(doc, "content")
+		return strField(doc, "body")
 	}
 	return ""
 }
