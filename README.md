@@ -32,6 +32,7 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/auth.go` | `login` / `logout`. |
 | `cmd/workspace.go`, `cmd/workspacelist.go` | Active workspace selection and listing. |
 | `cmd/ideas.go` | Idea CRUD + setting the active idea. |
+| `cmd/ideas_export.go` | `ideas export` — structural export of an idea's entity graph. |
 | `cmd/identity.go` | Identity (character) management. |
 | `cmd/arc.go`, `cmd/beat.go` | Arc and beat management. |
 | `cmd/person.go`, `cmd/place.go`, `cmd/setting.go`, `cmd/thing.go`, `cmd/disposition.go` | Person/place/thing entities and their settings and dispositions. |
@@ -42,7 +43,8 @@ extract the archive, and add the binary to your `PATH`.
 | `internal/api/client.go` | Thin HTTP client (`Get`/`Post`/`Patch`) with bearer-token auth and one automatic refresh-and-retry on 401. |
 | `internal/auth/` | OAuth2 PKCE login flow (`pkce.go`) and the local browser launch (`browser.go`). |
 | `internal/config/` | Local persistence: `config.go` for credentials (`~/.yherdacmd/credentials.json`), `context.go` for per-directory active context (`.yherda` file). |
-| `internal/export/` | Pluggable export formats. `exporter.go` defines the `Exporter` interface, the format registry, and `BuildTree`, which converts the API's nested segment JSON into the shared `SegmentNode` tree and reads each segment's content out of its `data` array (currently hardcoded to the `writer` plugin's entry — see `defaultPlugin`). `stdout.go` and `scriv.go` are the two registered formats today. |
+| `internal/export/` | **Content export pipeline.** `exporter.go` defines the `Exporter` interface, the format registry, and `BuildTree`, which converts the API's nested segment JSON into the shared `SegmentNode` tree and reads each segment's content out of its `data` array (currently hardcoded to the `writer` plugin's entry — see `defaultPlugin`). `stdout.go` and `scriv.go` are the two registered formats today. |
+| `internal/structural/` | **Structural export pipeline.** Exports an idea's entity graph (identities, arcs, beats, places, things, and attached documents) into formats that understand story structure. `manifest.go` declares which entities a format needs and enforces dependency rules (Beats → Arcs → Identities). `resolver.go` fetches only what the manifest requests. `exporter.go` defines the `Exporter` interface and format registry. `obsidian.go` is the first registered format, writing a vault of `.md` files. |
 
 ## Dependencies
 
@@ -73,6 +75,32 @@ go test ./...
 ```
 
 No build tags or external services are required to run the test suite — tests exercise the cobra command tree and local config/auth logic directly.
+
+## Export pipelines
+
+There are two independent export pipelines:
+
+| Pipeline | Package | Command | What it exports |
+|---|---|---|---|
+| Content | `internal/export/` | `yherda expression export` | Segment tree → rendered format (manuscript, screenplay, …) |
+| Structural | `internal/structural/` | `yherda ideas export` | Entity graph → structural format (Obsidian vault, …) |
+
+A format that needs both (e.g. a film production package wanting a scene breakdown _and_ scene content) implements both interfaces and registers in both packages. The pipelines stay independent — they operate on different object graphs and will diverge.
+
+### Adding a new content export format (`internal/export/`)
+
+1. Implement `export.Exporter` (`Export(title string, roots []SegmentNode, output string) error` + `DefaultExt() string`).
+2. Register it in the `registry` map in `exporter.go`.
+
+### Adding a new structural export format (`internal/structural/`)
+
+1. Implement `structural.Exporter`:
+   - `Manifest() Manifest` — declare which entity types you need. Dependency rules (Beats→Arcs→Identities) are enforced by `Manifest.Resolve()` automatically.
+   - `Export(graph IdeaGraph, output string) error` — write the output.
+   - `DefaultExt() string` — file extension, or `""` for directory-based formats.
+2. Register it in the `registry` map in `exporter.go`.
+
+The `--format` flag help text in `ideas export` is auto-populated from `structural.Formats()` at init time — no other changes needed.
 
 ## Adding a new resource command
 
