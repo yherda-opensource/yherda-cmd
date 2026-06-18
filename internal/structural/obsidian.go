@@ -11,17 +11,6 @@ import (
 // ObsidianExporter writes an IdeaGraph as a vault of .md files.
 type ObsidianExporter struct{}
 
-func (o *ObsidianExporter) Manifest() Manifest {
-	return Manifest{
-		Identities: true,
-		Arcs:       true,
-		Beats:      true,
-		Places:     true,
-		Things:     true,
-		Docs:       true,
-	}
-}
-
 func (o *ObsidianExporter) DefaultExt() string { return "" }
 
 func (o *ObsidianExporter) Export(graph IdeaGraph, output string) error {
@@ -29,16 +18,12 @@ func (o *ObsidianExporter) Export(graph IdeaGraph, output string) error {
 		output = "obsidian-export"
 	}
 
-	if err := checkOutputDir(output); err != nil {
-		return err
-	}
-
 	// Index docs by entity_type+entity_id for O(1) lookup.
 	docIndex := buildDocIndex(graph.Docs)
 
 	type entityGroup struct {
-		subdir   string
-		entities []map[string]any
+		subdir        string
+		entities      []map[string]any
 		frontMatterFn func(e map[string]any) map[string]string
 	}
 
@@ -144,21 +129,6 @@ func (o *ObsidianExporter) Export(graph IdeaGraph, output string) error {
 	return nil
 }
 
-// checkOutputDir returns an error if the output directory exists and is non-empty.
-func checkOutputDir(output string) error {
-	entries, err := os.ReadDir(output)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	if len(entries) > 0 {
-		return fmt.Errorf("output directory %q already exists and is not empty (remove it first)", output)
-	}
-	return nil
-}
-
 // buildDocIndex indexes docs by "entityType:entityID" for fast lookup.
 func buildDocIndex(docs []map[string]any) map[string]map[string]any {
 	idx := map[string]map[string]any{}
@@ -172,7 +142,7 @@ func buildDocIndex(docs []map[string]any) map[string]map[string]any {
 	return idx
 }
 
-// docBodyForEntity returns the content from the IdeaDocument attached to an entity, or "".
+// docBodyForEntity returns the body from the IdeaDocument attached to an entity, or "".
 func docBodyForEntity(idx map[string]map[string]any, entityType, entityID string) string {
 	if doc, ok := idx[entityType+":"+entityID]; ok {
 		return strField(doc, "body")
@@ -219,7 +189,6 @@ func nameForEntity(e map[string]any) string {
 func writeMarkdown(path string, frontMatter map[string]string, body string) error {
 	var sb strings.Builder
 	sb.WriteString("---\n")
-	// Write keys in a stable order.
 	keys := []string{"id", "arc_id", "identity_id", "created"}
 	for _, k := range keys {
 		if v, ok := frontMatter[k]; ok && v != "" {

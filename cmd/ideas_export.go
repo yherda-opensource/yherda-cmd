@@ -46,14 +46,19 @@ into a rendered content format (manuscript, screenplay, etc.).`,
 			return fmt.Errorf("no active idea — use --idea <id> or run 'yherda ideas use <id>'")
 		}
 
-		client := mustClient()
-		graph, err := structural.Resolve(client, ideaID, driver.Manifest())
-		if err != nil {
-			return err
+		// Build the manifest from what the user asked for.
+		// Today we always export everything; a future --entities flag would
+		// let the user control which entity types are included.
+		m := structural.Manifest{
+			Identities: true,
+			Arcs:       true,
+			Beats:      true,
+			Places:     true,
+			Things:     true,
+			Docs:       true,
 		}
 
-		output := ideasExportOutput
-		return driver.Export(graph, output)
+		return structural.Export(mustClient(), driver, m, ideaID, ideasExportOutput)
 	},
 }
 
