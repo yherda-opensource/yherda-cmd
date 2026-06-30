@@ -38,7 +38,7 @@ var expressionListCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result []map[string]any
-		if err := client.Get("/expression/?idea="+ideaID, &result); err != nil {
+		if err := client.Get("/storyline/"+ideaID+"/expressions/", &result); err != nil {
 			return err
 		}
 		if jsonOutput {
@@ -194,7 +194,7 @@ func fetchSegmentTree(exprID string) ([]export.SegmentNode, string, error) {
 	}
 
 	var allSegments []map[string]any
-	if err := client.Get("/segment/?template="+templateID+"&root=true", &allSegments); err != nil {
+	if err := client.Get("/expressiontemplate/"+templateID+"/segments/?root=true", &allSegments); err != nil {
 		return nil, "", fmt.Errorf("could not fetch segments: %w", err)
 	}
 
