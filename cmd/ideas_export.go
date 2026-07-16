@@ -18,7 +18,7 @@ var (
 var ideasExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export an idea's entity graph to a structural format",
-	Long: `Exports the entity graph of an idea (identities, arcs, beats, places, things,
+	Long: `Exports the entity graph of an idea (identities, places, things,
 and attached documents) to a structural format such as an Obsidian vault.
 
 This is distinct from 'yherda expression export', which exports a segment tree
@@ -51,8 +51,6 @@ into a rendered content format (manuscript, screenplay, etc.).`,
 		// let the user control which entity types are included.
 		m := structural.Manifest{
 			Identities: true,
-			Arcs:       true,
-			Beats:      true,
 			Places:     true,
 			Things:     true,
 			Docs:       true,

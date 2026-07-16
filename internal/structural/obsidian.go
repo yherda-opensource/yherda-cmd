@@ -39,29 +39,6 @@ func (o *ObsidianExporter) Export(graph IdeaGraph, output string) error {
 			},
 		},
 		{
-			subdir:   "arcs",
-			entities: graph.Arcs,
-			frontMatterFn: func(e map[string]any) map[string]string {
-				return map[string]string{
-					"id":          strField(e, "id"),
-					"identity_id": strField(e, "identity"),
-					"created":     strField(e, "created"),
-				}
-			},
-		},
-		{
-			subdir:   "beats",
-			entities: graph.Beats,
-			frontMatterFn: func(e map[string]any) map[string]string {
-				return map[string]string{
-					"id":          strField(e, "id"),
-					"arc_id":      strField(e, "arc"),
-					"identity_id": strField(e, "identity"),
-					"created":     strField(e, "created"),
-				}
-			},
-		},
-		{
 			subdir:   "places",
 			entities: graph.Places,
 			frontMatterFn: func(e map[string]any) map[string]string {
@@ -189,7 +166,7 @@ func nameForEntity(e map[string]any) string {
 func writeMarkdown(path string, frontMatter map[string]string, body string) error {
 	var sb strings.Builder
 	sb.WriteString("---\n")
-	keys := []string{"id", "arc_id", "identity_id", "created"}
+	keys := []string{"id", "created"}
 	for _, k := range keys {
 		if v, ok := frontMatter[k]; ok && v != "" {
 			fmt.Fprintf(&sb, "%s: %s\n", k, v)

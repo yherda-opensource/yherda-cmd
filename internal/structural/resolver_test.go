@@ -6,20 +6,16 @@ import (
 )
 
 type mockFetcher struct {
-	calls    []string
-	roleIDs  []string
-	arcIDs   []string
+	calls     []string
+	personIDs []string
 }
 
 func (m *mockFetcher) Get(path string, out any) error {
 	m.calls = append(m.calls, path)
 	switch v := out.(type) {
 	case *[]map[string]any:
-		// Return synthetic roles/arcs so the resolver can traverse them.
-		if path == "/storyline/42/roles/" {
-			*v = rolesFor(m.roleIDs)
-		} else if isRoleArcsPath(path, m.roleIDs) {
-			*v = arcsFor(m.arcIDs)
+		if path == "/storyline/42/persons/" {
+			*v = personsFor(m.personIDs)
 		} else {
 			*v = nil
 		}
@@ -29,29 +25,12 @@ func (m *mockFetcher) Get(path string, out any) error {
 	return nil
 }
 
-func rolesFor(ids []string) []map[string]any {
-	roles := make([]map[string]any, len(ids))
+func personsFor(ids []string) []map[string]any {
+	persons := make([]map[string]any, len(ids))
 	for i, id := range ids {
-		roles[i] = map[string]any{"id": id}
+		persons[i] = map[string]any{"id": id}
 	}
-	return roles
-}
-
-func arcsFor(ids []string) []map[string]any {
-	arcs := make([]map[string]any, len(ids))
-	for i, id := range ids {
-		arcs[i] = map[string]any{"id": id}
-	}
-	return arcs
-}
-
-func isRoleArcsPath(path string, roleIDs []string) bool {
-	for _, id := range roleIDs {
-		if path == "/role/"+id+"/arcs/" {
-			return true
-		}
-	}
-	return false
+	return persons
 }
 
 func hasCall(calls []string, path string) bool {
@@ -76,10 +55,7 @@ func TestResolver_OnlyCallsDeclaredEndpoints(t *testing.T) {
 		t.Error("expected call to /storyline/42/places/")
 	}
 	for _, unexpected := range []string{
-		"/storyline/42/roles/",
-		"/storyline/42/identities/",
-		"/storyline/42/arcs/",
-		"/storyline/42/beats/",
+		"/storyline/42/persons/",
 		"/storyline/42/things/",
 		"/storyline/42/documents/",
 	} {
@@ -89,54 +65,31 @@ func TestResolver_OnlyCallsDeclaredEndpoints(t *testing.T) {
 	}
 }
 
-func TestResolver_BeatsTriggersFullIdentityChain(t *testing.T) {
-	f := &mockFetcher{roleIDs: []string{"r1"}, arcIDs: []string{"a1"}}
-	_, err := Resolve(f, "42", Manifest{Beats: true})
+func TestResolver_IdentitiesFetchedPerPerson(t *testing.T) {
+	f := &mockFetcher{personIDs: []string{"p1", "p2"}}
+	_, err := Resolve(f, "42", Manifest{Identities: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !hasCall(f.calls, "/storyline/42/roles/") {
-		t.Error("expected call to /storyline/42/roles/")
+	if !hasCall(f.calls, "/storyline/42/persons/") {
+		t.Error("expected call to /storyline/42/persons/")
 	}
-	if !hasCall(f.calls, "/role/r1/identities/") {
-		t.Error("expected call to /role/r1/identities/")
+	if !hasCall(f.calls, "/person/p1/identities/") {
+		t.Error("expected call to /person/p1/identities/")
 	}
-	if !hasCall(f.calls, "/role/r1/arcs/") {
-		t.Error("expected call to /role/r1/arcs/")
-	}
-	if !hasCall(f.calls, "/arc/a1/beats/") {
-		t.Error("expected call to /arc/a1/beats/")
+	if !hasCall(f.calls, "/person/p2/identities/") {
+		t.Error("expected call to /person/p2/identities/")
 	}
 }
 
-func TestResolver_ArcsPerRole(t *testing.T) {
-	f := &mockFetcher{roleIDs: []string{"r1", "r2"}, arcIDs: []string{"a1"}}
-	_, err := Resolve(f, "42", Manifest{Arcs: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !hasCall(f.calls, "/role/r1/arcs/") {
-		t.Error("expected call to /role/r1/arcs/")
-	}
-	if !hasCall(f.calls, "/role/r2/arcs/") {
-		t.Error("expected call to /role/r2/arcs/")
-	}
-	// Beats should not be fetched.
-	for _, c := range f.calls {
-		if len(c) > 4 && c[len(c)-7:] == "/beats/" {
-			t.Errorf("unexpected beats call: %s", c)
-		}
-	}
-}
-
-func TestResolver_IdentitiesNotFetchedForPlacesOnly(t *testing.T) {
+func TestResolver_PersonsNotFetchedForPlacesOnly(t *testing.T) {
 	f := &mockFetcher{}
 	_, err := Resolve(f, "42", Manifest{Places: true, Things: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if hasCall(f.calls, "/storyline/42/roles/") {
-		t.Error("roles should not be fetched when only Places/Things requested")
+	if hasCall(f.calls, "/storyline/42/persons/") {
+		t.Error("persons should not be fetched when only Places/Things requested")
 	}
 }
 

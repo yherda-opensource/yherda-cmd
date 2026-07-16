@@ -11,14 +11,14 @@ import (
 var identityCmd = &cobra.Command{
 	Use:   "identity",
 	Short: "Manage identities",
-	Long:  "An identity is a belief system a person holds in your story — the lens they see through, which can shift over an arc. Identities belong to a person.",
+	Long:  "An identity is a belief system a person holds in your story — the lens they see through. Identities belong to a person.",
 }
 
 var identityPersonID string
 
 func listIdentities(client *api.Client, personID string) error {
 	var result []map[string]any
-	if err := client.Get("/role/"+personID+"/identities/", &result); err != nil {
+	if err := client.Get("/person/"+personID+"/identities/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
@@ -87,7 +87,7 @@ var identityCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/role/"+personID+"/identities/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/person/"+personID+"/identities/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		printJSON(result)
@@ -96,8 +96,8 @@ var identityCreateCmd = &cobra.Command{
 }
 
 func init() {
-	identityListCmd.Flags().StringVar(&identityPersonID, "person", "", "Person (role) ID (overrides active context)")
-	identityCreateCmd.Flags().String("person", "", "Person (role) ID (overrides active context)")
+	identityListCmd.Flags().StringVar(&identityPersonID, "person", "", "Person ID (overrides active context)")
+	identityCreateCmd.Flags().String("person", "", "Person ID (overrides active context)")
 	identityCreateCmd.Flags().String("name", "", "Name of the identity (required)")
 	identityCmd.AddCommand(identityListCmd, identityCreateCmd)
 }

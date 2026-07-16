@@ -10,8 +10,6 @@ import (
 type IdeaGraph struct {
 	Idea       map[string]any
 	Identities []map[string]any
-	Arcs       []map[string]any
-	Beats      []map[string]any
 	Places     []map[string]any
 	Things     []map[string]any
 	Docs       []map[string]any

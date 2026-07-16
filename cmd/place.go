@@ -64,7 +64,7 @@ var placeListCmd = &cobra.Command{
 var placeUseCmd = &cobra.Command{
 	Use:     "use <id>",
 	Short:   "Set the active place",
-	Long:    "Sets the active place. Clears any active person/arc/thing, since those aren't scoped under a place.",
+	Long:    "Sets the active place. Clears any active person/thing, since those aren't scoped under a place.",
 	Example: `  yherda place use 12`,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,7 +74,6 @@ var placeUseCmd = &cobra.Command{
 		}
 		ctx.Place = args[0]
 		ctx.Person = ""
-		ctx.Arc = ""
 		ctx.Thing = ""
 		if err := config.SaveContext(ctx); err != nil {
 			return err
@@ -118,7 +117,6 @@ var placeCreateCmd = &cobra.Command{
 			ctx.Idea = ideaID
 			ctx.Place = id
 			ctx.Person = ""
-			ctx.Arc = ""
 			ctx.Thing = ""
 			_ = config.SaveContext(ctx)
 		}

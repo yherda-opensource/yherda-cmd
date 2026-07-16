@@ -40,62 +40,6 @@ func TestIdentityCreate_ContextPerson_ReachesAPI(t *testing.T) {
 	}
 }
 
-// --- arc create ---
-
-func TestArcCreate_MissingWant_Error(t *testing.T) {
-	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
-
-	rootCmd.SetArgs([]string{"arc", "create"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when --want is missing")
-	}
-}
-
-func TestArcCreate_NoPersonNoContext_Error(t *testing.T) {
-	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"arc", "create", "--want", "To find the truth"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when no --person and no active context")
-	}
-}
-
-// --- beat create ---
-
-func TestBeatCreate_MissingDescription_Error(t *testing.T) {
-	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
-
-	rootCmd.SetArgs([]string{"beat", "create"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when --description is missing")
-	}
-}
-
-func TestBeatCreate_NoArcNoContext_Error(t *testing.T) {
-	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"beat", "create", "--description", "The call to adventure"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when no --arc and no active context")
-	}
-}
-
-func TestBeatCreate_ContextArc_ReachesAPI(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
-
-	rootCmd.SetArgs([]string{"beat", "create", "--description", "The call to adventure"})
-	err := rootCmd.Execute()
-	if err != nil && (err.Error() == "--arc is required (or set active arc with 'yherda arc use <id>')" ||
-		err.Error() == "--description is required") {
-		t.Errorf("context should have satisfied requirements, got: %v", err)
-	}
-}
-
 // --- place create ---
 
 func TestPlaceCreate_MissingName_Error(t *testing.T) {

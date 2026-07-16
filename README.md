@@ -35,7 +35,6 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/ideas_export.go` | `ideas export` — structural export of an idea's entity graph. |
 | `cmd/ideas_import.go` | `ideas import` — structural import of a source format into an idea's entity graph. |
 | `cmd/identity.go` | Identity (character) management. |
-| `cmd/arc.go`, `cmd/beat.go` | Arc and beat management. |
 | `cmd/person.go`, `cmd/place.go`, `cmd/setting.go`, `cmd/thing.go`, `cmd/disposition.go` | Person/place/thing entities and their settings and dispositions. |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
 | `cmd/format.go` | Expression format management. |
@@ -45,7 +44,7 @@ extract the archive, and add the binary to your `PATH`.
 | `internal/auth/` | OAuth2 PKCE login flow (`pkce.go`) and the local browser launch (`browser.go`). |
 | `internal/config/` | Local persistence: `config.go` for credentials (`~/.yherdacmd/credentials.json`), `context.go` for per-directory active context (`.yherda` file). |
 | `internal/export/` | **Content export pipeline.** `exporter.go` defines the `Exporter` interface, the format registry, and `BuildTree`, which converts the API's nested segment JSON into the shared `SegmentNode` tree and reads each segment's content out of its `data` array (currently hardcoded to the `writer` plugin's entry — see `defaultPlugin`). `stdout.go` and `scriv.go` are the two registered formats today. |
-| `internal/structural/` | **Structural export and import pipeline.** `manifest.go` declares which entities a format needs and enforces dependency rules (Beats → Arcs → Identities). `resolver.go` fetches the entity graph from the API. `exporter.go` defines the `Exporter` interface and export format registry; `obsidian.go` is the first registered export format. `importer.go` defines the `Importer` interface and import format registry. `scriv_importer.go` parses Scrivener 3 `.scriv` packages into an `IdeaGraph`. `marshaller.go` is the reverse resolver — POSTs an `IdeaGraph` to the API in dependency order (identities → arcs → beats → places → things → docs). |
+| `internal/structural/` | **Structural export and import pipeline.** `manifest.go` declares which entities a format needs. `resolver.go` fetches the entity graph from the API. `exporter.go` defines the `Exporter` interface and export format registry; `obsidian.go` is the first registered export format. `importer.go` defines the `Importer` interface and import format registry. `scriv_importer.go` parses Scrivener 3 `.scriv` packages into an `IdeaGraph` (manuscript/scene structure is preserved as unmapped idea documents — Arc/Beat was removed in GEN-555 pending a future structural rebuild). `marshaller.go` is the reverse resolver — POSTs an `IdeaGraph` to the API in dependency order (identities → places → things → docs). |
 
 ## Dependencies
 
@@ -66,7 +65,7 @@ Run `go mod tidy` after adding any new import.
 ## Local state
 
 - **Credentials** — `~/.yherdacmd/credentials.json` (mode 0600), written by `login` and refreshed automatically by the API client on a 401.
-- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, arc, place, and thing. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it.
+- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, place, and thing. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it.
 
 ## Build and test
 

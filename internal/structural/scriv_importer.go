@@ -91,44 +91,20 @@ func mapBinderToGraph(items []binderItem, dataDir string) IdeaGraph {
 			}
 
 		case isManuscriptFolder(titleLower):
-			// Sub-folders are arcs; scenes inside are beats.
-			// If there are no sub-folders, treat direct children as beats under a single arc.
-			arcFolders := foldersIn(item.Children)
-			if len(arcFolders) == 0 {
-				// Single implicit arc named after the manuscript folder.
-				arcSrcID := item.UUID + "-arc"
-				arc := map[string]any{
-					"_id":          arcSrcID,
-					"_identity_id": "", // marshaller will skip if empty
-					"name":         item.Title,
+			// No platform structure currently models manuscript/scene hierarchy
+			// (Arc/Beat removed, GEN-555). Preserve scenes as unmapped idea
+			// documents pending a future structural rebuild.
+			for _, scene := range allLeaves(item.Children) {
+				title := scene.Title
+				if title == "" {
+					title = scene.UUID
 				}
-				graph.Arcs = append(graph.Arcs, arc)
-				for _, scene := range item.Children {
-					beat := map[string]any{
-						"_arc_id":     arcSrcID,
-						"name":        scene.Title,
-						"description": readContent(dataDir, scene.UUID),
-					}
-					graph.Beats = append(graph.Beats, beat)
+				doc := map[string]any{
+					"title":     title,
+					"body":      readContent(dataDir, scene.UUID),
+					"_unmapped": "true",
 				}
-			} else {
-				for _, arcFolder := range arcFolders {
-					arcSrcID := arcFolder.UUID
-					arc := map[string]any{
-						"_id":          arcSrcID,
-						"_identity_id": "", // no identity mapping from manuscript folders
-						"name":         arcFolder.Title,
-					}
-					graph.Arcs = append(graph.Arcs, arc)
-					for _, scene := range arcFolder.Children {
-						beat := map[string]any{
-							"_arc_id":     arcSrcID,
-							"name":        scene.Title,
-							"description": readContent(dataDir, scene.UUID),
-						}
-						graph.Beats = append(graph.Beats, beat)
-					}
-				}
+				graph.Docs = append(graph.Docs, doc)
 			}
 
 		case isResearchFolder(titleLower):
@@ -183,16 +159,6 @@ func isManuscriptFolder(title string) bool {
 
 func isResearchFolder(title string) bool {
 	return title == "research" || title == "notes" || title == "references"
-}
-
-func foldersIn(items []binderItem) []binderItem {
-	var folders []binderItem
-	for _, item := range items {
-		if item.Type == "Folder" || len(item.Children) > 0 {
-			folders = append(folders, item)
-		}
-	}
-	return folders
 }
 
 // allLeaves returns all leaf documents (no children) recursively.

@@ -47,14 +47,13 @@ func TestExport_EmptyOutputSkipsCheck(t *testing.T) {
 	}
 }
 
-func TestExport_ManifestNormalisedBeforeResolve(t *testing.T) {
-	f := &mockFetcher{roleIDs: []string{"r1"}, arcIDs: []string{"a1"}}
+func TestExport_IdentitiesFetchesPersons(t *testing.T) {
+	f := &mockFetcher{personIDs: []string{"p1"}}
 	driver := &stubDriver{}
-	// Beats=true without Arcs/Identities — controller must normalise before resolving.
-	if err := Export(f, driver, Manifest{Beats: true}, "42", ""); err != nil {
+	if err := Export(f, driver, Manifest{Identities: true}, "42", ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !hasCall(f.calls, "/storyline/42/roles/") {
-		t.Error("expected roles to be fetched after manifest normalisation")
+	if !hasCall(f.calls, "/storyline/42/persons/") {
+		t.Error("expected persons to be fetched")
 	}
 }

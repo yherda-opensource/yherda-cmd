@@ -14,13 +14,6 @@ func TestIdeasShow_MissingArg(t *testing.T) {
 	}
 }
 
-func TestArcUse_MissingArg(t *testing.T) {
-	rootCmd.SetArgs([]string{"arc", "use"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when id argument is missing")
-	}
-}
-
 func TestPersonUse_MissingArg(t *testing.T) {
 	rootCmd.SetArgs([]string{"person", "use"})
 	if err := rootCmd.Execute(); err == nil {

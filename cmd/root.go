@@ -20,13 +20,13 @@ var version = "dev"
 var rootCmd = &cobra.Command{
 	Use:   "yherda",
 	Short: "Command line interface for Yherda",
-	Long: `yherda brings your Yherda ideas, identities, arcs, and beats into the
+	Long: `yherda brings your Yherda ideas, persons, and identities into the
 terminal — and into whatever else you already work in. Script your workflow,
 wire it into an editor or build pipeline, or just work faster without leaving
 the keyboard.
 
 Run 'yherda <command> --help' for details on any command. Most commands
-operate on an active workspace/idea/person/arc/place/thing, set via the
+operate on an active workspace/idea/person/place/thing, set via the
 'use' subcommands and stored in a .yherda file in the current directory, so
 you rarely need to pass IDs by hand once you've set context.
 
@@ -51,8 +51,6 @@ func init() {
 	rootCmd.AddCommand(projectsCmd)
 	rootCmd.AddCommand(personCmd)
 	rootCmd.AddCommand(identityCmd)
-	rootCmd.AddCommand(arcCmd)
-	rootCmd.AddCommand(beatCmd)
 	rootCmd.AddCommand(placeCmd)
 	rootCmd.AddCommand(settingCmd)
 	rootCmd.AddCommand(thingCmd)
@@ -99,7 +97,6 @@ func printContext() {
 		{"workspace", ctx.Workspace},
 		{"idea", ctx.Idea},
 		{"person", ctx.Person},
-		{"arc", ctx.Arc},
 		{"place", ctx.Place},
 		{"thing", ctx.Thing},
 	}
