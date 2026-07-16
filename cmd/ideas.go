@@ -16,7 +16,7 @@ var ideasCmd = &cobra.Command{
 
 func listIdeas(client *api.Client) error {
 	var result []map[string]any
-	if err := client.Get("/storyline/", &result); err != nil {
+	if err := client.Get("/idea/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
@@ -51,7 +51,7 @@ var ideasShowCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
 		var result map[string]any
-		if err := client.Get("/storyline/"+args[0]+"/", &result); err != nil {
+		if err := client.Get("/idea/"+args[0]+"/", &result); err != nil {
 			return err
 		}
 		if jsonOutput {
@@ -79,7 +79,7 @@ var ideasCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/storyline/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/idea/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		if id := strField(result, "id"); id != "" {

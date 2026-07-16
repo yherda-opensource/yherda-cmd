@@ -53,7 +53,7 @@ func TestExport_IdentitiesFetchesPersons(t *testing.T) {
 	if err := Export(f, driver, Manifest{Identities: true}, "42", ""); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !hasCall(f.calls, "/storyline/42/persons/") {
+	if !hasCall(f.calls, "/idea/42/persons/") {
 		t.Error("expected persons to be fetched")
 	}
 }

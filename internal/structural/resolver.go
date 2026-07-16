@@ -7,7 +7,7 @@ type Fetcher interface {
 
 // Resolve fetches all entity data declared by the manifest and returns an IdeaGraph.
 // Entity paths mirror the CLI's actual API structure:
-//   - persons are nested under the idea: /storyline/{id}/persons/
+//   - persons are nested under the idea: /idea/{id}/persons/
 //   - identities are nested under each person: /person/{personID}/identities/
 //   - places, things, and docs are nested under the idea directly
 func Resolve(client Fetcher, ideaID string, m Manifest) (IdeaGraph, error) {
@@ -18,14 +18,14 @@ func Resolve(client Fetcher, ideaID string, m Manifest) (IdeaGraph, error) {
 	}
 
 	var idea map[string]any
-	if err := client.Get("/storyline/"+ideaID+"/", &idea); err != nil {
+	if err := client.Get("/idea/"+ideaID+"/", &idea); err != nil {
 		return graph, err
 	}
 	graph.Idea = idea
 
 	if m.Identities {
 		var persons []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/persons/", &persons); err != nil {
+		if err := client.Get("/idea/"+ideaID+"/persons/", &persons); err != nil {
 			return graph, err
 		}
 
@@ -42,7 +42,7 @@ func Resolve(client Fetcher, ideaID string, m Manifest) (IdeaGraph, error) {
 
 	if m.Places {
 		var items []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/places/", &items); err != nil {
+		if err := client.Get("/idea/"+ideaID+"/places/", &items); err != nil {
 			return graph, err
 		}
 		graph.Places = items
@@ -50,7 +50,7 @@ func Resolve(client Fetcher, ideaID string, m Manifest) (IdeaGraph, error) {
 
 	if m.Things {
 		var items []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/things/", &items); err != nil {
+		if err := client.Get("/idea/"+ideaID+"/things/", &items); err != nil {
 			return graph, err
 		}
 		graph.Things = items
@@ -58,7 +58,7 @@ func Resolve(client Fetcher, ideaID string, m Manifest) (IdeaGraph, error) {
 
 	if m.Docs {
 		var items []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/documents/", &items); err != nil {
+		if err := client.Get("/idea/"+ideaID+"/documents/", &items); err != nil {
 			return graph, err
 		}
 		graph.Docs = items
