@@ -18,7 +18,7 @@ var placeIdeaID string
 
 func listPlaces(client *api.Client, ideaID string) error {
 	var result []map[string]any
-	if err := client.Get("/storyline/"+ideaID+"/places/", &result); err != nil {
+	if err := client.Get("/idea/"+ideaID+"/places/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
@@ -106,7 +106,7 @@ var placeCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/places/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/places/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		if id := strField(result, "id"); id != "" {

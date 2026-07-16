@@ -38,7 +38,7 @@ var expressionListCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result []map[string]any
-		if err := client.Get("/storyline/"+ideaID+"/expressions/", &result); err != nil {
+		if err := client.Get("/idea/"+ideaID+"/expressions/", &result); err != nil {
 			return err
 		}
 		if jsonOutput {

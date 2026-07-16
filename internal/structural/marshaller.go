@@ -16,7 +16,7 @@ func Marshal(client Poster, graph IdeaGraph, ideaID string) error {
 
 		// Create a person to own this identity.
 		var person map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/persons/", map[string]string{"name": name}, &person); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/persons/", map[string]string{"name": name}, &person); err != nil {
 			return fmt.Errorf("creating person for identity %q: %w", name, err)
 		}
 		personID := strField(person, "id")
@@ -31,7 +31,7 @@ func Marshal(client Poster, graph IdeaGraph, ideaID string) error {
 	for _, place := range graph.Places {
 		name := strField(place, "name")
 		var created map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/places/", map[string]string{"name": name}, &created); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/places/", map[string]string{"name": name}, &created); err != nil {
 			return fmt.Errorf("creating place %q: %w", name, err)
 		}
 	}
@@ -40,7 +40,7 @@ func Marshal(client Poster, graph IdeaGraph, ideaID string) error {
 	for _, thing := range graph.Things {
 		name := strField(thing, "name")
 		var created map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/things/", map[string]string{"name": name}, &created); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/things/", map[string]string{"name": name}, &created); err != nil {
 			return fmt.Errorf("creating thing %q: %w", name, err)
 		}
 	}
@@ -54,7 +54,7 @@ func Marshal(client Poster, graph IdeaGraph, ideaID string) error {
 			payload["body"] = body
 		}
 		var created map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/documents/", payload, &created); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/documents/", payload, &created); err != nil {
 			return fmt.Errorf("creating document %q: %w", title, err)
 		}
 	}

@@ -18,7 +18,7 @@ var thingIdeaID string
 
 func listThings(client *api.Client, ideaID string) error {
 	var result []map[string]any
-	if err := client.Get("/storyline/"+ideaID+"/things/", &result); err != nil {
+	if err := client.Get("/idea/"+ideaID+"/things/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
@@ -106,7 +106,7 @@ var thingCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/things/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/idea/"+ideaID+"/things/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		if id := strField(result, "id"); id != "" {

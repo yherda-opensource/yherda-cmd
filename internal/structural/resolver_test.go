@@ -14,7 +14,7 @@ func (m *mockFetcher) Get(path string, out any) error {
 	m.calls = append(m.calls, path)
 	switch v := out.(type) {
 	case *[]map[string]any:
-		if path == "/storyline/42/persons/" {
+		if path == "/idea/42/persons/" {
 			*v = personsFor(m.personIDs)
 		} else {
 			*v = nil
@@ -48,16 +48,16 @@ func TestResolver_OnlyCallsDeclaredEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !hasCall(f.calls, "/storyline/42/") {
-		t.Error("expected call to /storyline/42/")
+	if !hasCall(f.calls, "/idea/42/") {
+		t.Error("expected call to /idea/42/")
 	}
-	if !hasCall(f.calls, "/storyline/42/places/") {
-		t.Error("expected call to /storyline/42/places/")
+	if !hasCall(f.calls, "/idea/42/places/") {
+		t.Error("expected call to /idea/42/places/")
 	}
 	for _, unexpected := range []string{
-		"/storyline/42/persons/",
-		"/storyline/42/things/",
-		"/storyline/42/documents/",
+		"/idea/42/persons/",
+		"/idea/42/things/",
+		"/idea/42/documents/",
 	} {
 		if hasCall(f.calls, unexpected) {
 			t.Errorf("unexpected call to %s", unexpected)
@@ -71,8 +71,8 @@ func TestResolver_IdentitiesFetchedPerPerson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !hasCall(f.calls, "/storyline/42/persons/") {
-		t.Error("expected call to /storyline/42/persons/")
+	if !hasCall(f.calls, "/idea/42/persons/") {
+		t.Error("expected call to /idea/42/persons/")
 	}
 	if !hasCall(f.calls, "/person/p1/identities/") {
 		t.Error("expected call to /person/p1/identities/")
@@ -88,7 +88,7 @@ func TestResolver_PersonsNotFetchedForPlacesOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if hasCall(f.calls, "/storyline/42/persons/") {
+	if hasCall(f.calls, "/idea/42/persons/") {
 		t.Error("persons should not be fetched when only Places/Things requested")
 	}
 }
