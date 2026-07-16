@@ -30,7 +30,7 @@ func withDoc(id, entityType, entityID, content string) func(*IdeaGraph) {
 			"id":          id,
 			"entity_type": entityType,
 			"entity_id":   entityID,
-			"body":     content,
+			"body":        content,
 			"created":     "2026-01-01",
 		})
 	}
@@ -41,7 +41,7 @@ func withOrphanDoc(id, title, content string) func(*IdeaGraph) {
 		g.Docs = append(g.Docs, map[string]any{
 			"id":      id,
 			"title":   title,
-			"body": content,
+			"body":    content,
 			"created": "2026-01-01",
 		})
 	}
@@ -70,17 +70,14 @@ func TestObsidian_OutputDirCreated(t *testing.T) {
 	}
 }
 
-
 func TestObsidian_CreatesDirectoryLayout(t *testing.T) {
 	graph := makeGraph(withIdentity("1", "Jo Ann Hayes"))
-	graph.Arcs = []map[string]any{{"id": "10", "name": "The Reluctant Hero", "identity": "1", "created": "2026-01-01"}}
-	graph.Beats = []map[string]any{{"id": "20", "name": "Act 1 Beat 1", "arc": "10", "identity": "1", "created": "2026-01-01"}}
 	graph.Places = []map[string]any{{"id": "30", "name": "The Warehouse", "created": "2026-01-01"}}
 	graph.Things = []map[string]any{{"id": "40", "name": "The Briefcase", "created": "2026-01-01"}}
 
 	output := exportTo(t, graph)
 
-	for _, sub := range []string{"identities", "arcs", "beats", "places", "things", "docs"} {
+	for _, sub := range []string{"identities", "places", "things", "docs"} {
 		if _, err := os.Stat(filepath.Join(output, sub)); err != nil {
 			t.Errorf("missing subdir %s: %v", sub, err)
 		}

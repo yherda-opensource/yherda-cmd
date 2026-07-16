@@ -57,8 +57,6 @@ func printDryRun(graph IdeaGraph) {
 
 	fmt.Println("Would create:")
 	fmt.Printf("  %d identities\n", len(graph.Identities))
-	fmt.Printf("  %d arcs\n", len(graph.Arcs))
-	fmt.Printf("  %d beats\n", len(graph.Beats))
 	fmt.Printf("  %d places\n", len(graph.Places))
 	fmt.Printf("  %d things\n", len(graph.Things))
 	if regularDocs > 0 {

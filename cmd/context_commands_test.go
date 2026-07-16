@@ -89,65 +89,6 @@ func TestIdentityList_ContextPersonUsed_NoContextError(t *testing.T) {
 	}
 }
 
-// --- arc list ---
-
-func TestArcList_NoPersonOrIdeaContext_FallsBack(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"arc", "list"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
-		t.Error("should fall back to listing rather than returning a hard error")
-	}
-}
-
-func TestArcList_ContextPersonUsed_NoContextError(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Person: "person-1"})
-
-	rootCmd.SetArgs([]string{"arc", "list"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
-		t.Error("active person in context should have satisfied the requirement")
-	}
-}
-
-func TestArcList_IdeaFlagBypassesPersonContext(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"arc", "list", "--idea", "idea-1"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active person — run: yherda person use <id>" {
-		t.Error("--idea flag should bypass person context requirement")
-	}
-}
-
-// --- beat list ---
-
-func TestBeatList_NoArcContext_FallsBack(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"beat", "list"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active arc — run: yherda arc use <id>" {
-		t.Error("should fall back to listing rather than returning a hard error")
-	}
-}
-
-func TestBeatList_ContextArcUsed_NoContextError(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Arc: "arc-1"})
-
-	rootCmd.SetArgs([]string{"beat", "list"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active arc — run: yherda arc use <id>" {
-		t.Error("active arc in context should have satisfied the requirement")
-	}
-}
-
 // --- place list ---
 
 func TestPlaceList_NoIdeaContext_FallsBack(t *testing.T) {
@@ -252,7 +193,6 @@ func TestPersonUse_SetsPersonClearsDownstream(t *testing.T) {
 		Workspace: "ws",
 		Idea:      "idea-1",
 		Person:    "old-person",
-		Arc:       "arc-1",
 		Place:     "place-1",
 		Thing:     "thing-1",
 	})
@@ -269,9 +209,6 @@ func TestPersonUse_SetsPersonClearsDownstream(t *testing.T) {
 	if loaded.Idea != "idea-1" {
 		t.Errorf("active_idea should be unchanged: got %q", loaded.Idea)
 	}
-	if loaded.Arc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
-	}
 	if loaded.Place != "" {
 		t.Errorf("active_place should be cleared, got %q", loaded.Place)
 	}
@@ -286,7 +223,6 @@ func TestPlaceUse_SetsPlaceClearsDownstream(t *testing.T) {
 		Workspace: "ws",
 		Idea:      "idea-1",
 		Person:    "person-1",
-		Arc:       "arc-1",
 		Place:     "old-place",
 		Thing:     "thing-1",
 	})
@@ -306,9 +242,6 @@ func TestPlaceUse_SetsPlaceClearsDownstream(t *testing.T) {
 	if loaded.Person != "" {
 		t.Errorf("active_person should be cleared, got %q", loaded.Person)
 	}
-	if loaded.Arc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
-	}
 	if loaded.Thing != "" {
 		t.Errorf("active_thing should be cleared, got %q", loaded.Thing)
 	}
@@ -320,7 +253,6 @@ func TestThingUse_SetsThingClearsDownstream(t *testing.T) {
 		Workspace: "ws",
 		Idea:      "idea-1",
 		Person:    "person-1",
-		Arc:       "arc-1",
 		Place:     "place-1",
 		Thing:     "old-thing",
 	})
@@ -340,9 +272,6 @@ func TestThingUse_SetsThingClearsDownstream(t *testing.T) {
 	if loaded.Person != "" {
 		t.Errorf("active_person should be cleared, got %q", loaded.Person)
 	}
-	if loaded.Arc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
-	}
 	if loaded.Place != "" {
 		t.Errorf("active_place should be cleared, got %q", loaded.Place)
 	}
@@ -354,7 +283,6 @@ func TestIdeasUse_SetsIdeaClearsAll(t *testing.T) {
 		Workspace: "ws",
 		Idea:      "old-idea",
 		Person:    "person-1",
-		Arc:       "arc-1",
 		Place:     "place-1",
 		Thing:     "thing-1",
 	})
@@ -370,9 +298,6 @@ func TestIdeasUse_SetsIdeaClearsAll(t *testing.T) {
 	}
 	if loaded.Person != "" {
 		t.Errorf("active_person should be cleared, got %q", loaded.Person)
-	}
-	if loaded.Arc != "" {
-		t.Errorf("active_arc should be cleared, got %q", loaded.Arc)
 	}
 	if loaded.Place != "" {
 		t.Errorf("active_place should be cleared, got %q", loaded.Place)

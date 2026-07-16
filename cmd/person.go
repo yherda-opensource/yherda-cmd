@@ -10,15 +10,15 @@ import (
 
 var personCmd = &cobra.Command{
 	Use:   "person",
-	Short: "Manage persons (roles)",
-	Long:  "A person is a role in your story — the slot a character fills. Persons hold identities (which can change) and arcs. Persons belong to an idea.",
+	Short: "Manage persons",
+	Long:  "A person is the slot a character fills in your story. Persons hold identities (which can change) and goals. Persons belong to an idea.",
 }
 
 var personIdeaID string
 
 func listPersons(client *api.Client, ideaID string) error {
 	var result []map[string]any
-	if err := client.Get("/storyline/"+ideaID+"/roles/", &result); err != nil {
+	if err := client.Get("/storyline/"+ideaID+"/persons/", &result); err != nil {
 		return err
 	}
 	if jsonOutput {
@@ -37,7 +37,7 @@ func listPersons(client *api.Client, ideaID string) error {
 
 var personListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List persons (roles) for an idea",
+	Short: "List persons for an idea",
 	Long:  "Lists persons for an idea. Uses the active idea unless --idea is passed.",
 	Example: `  yherda person list
   yherda person list --idea 42`,
@@ -63,8 +63,8 @@ var personListCmd = &cobra.Command{
 
 var personUseCmd = &cobra.Command{
 	Use:     "use <id>",
-	Short:   "Set the active person (role)",
-	Long:    "Sets the active person. Clears any active arc/place/thing, since those belong to a specific person.",
+	Short:   "Set the active person",
+	Long:    "Sets the active person. Clears any active place/thing, since those belong to a specific person.",
 	Example: `  yherda person use 7`,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,6 @@ var personUseCmd = &cobra.Command{
 			return err
 		}
 		ctx.Person = args[0]
-		ctx.Arc = ""
 		ctx.Place = ""
 		ctx.Thing = ""
 		if err := config.SaveContext(ctx); err != nil {
@@ -107,7 +106,7 @@ var personCreateCmd = &cobra.Command{
 		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/storyline/"+ideaID+"/roles/", map[string]string{"name": name}, &result); err != nil {
+		if err := client.Post("/storyline/"+ideaID+"/persons/", map[string]string{"name": name}, &result); err != nil {
 			return err
 		}
 		if id := strField(result, "id"); id != "" {
@@ -117,7 +116,6 @@ var personCreateCmd = &cobra.Command{
 			}
 			ctx.Idea = ideaID
 			ctx.Person = id
-			ctx.Arc = ""
 			ctx.Place = ""
 			ctx.Thing = ""
 			_ = config.SaveContext(ctx)

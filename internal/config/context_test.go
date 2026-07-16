@@ -32,7 +32,6 @@ func TestSaveAndLoadContext(t *testing.T) {
 		APIServer: "https://ws.example.com",
 		Idea:      "idea-1",
 		Person:    "person-1",
-		Arc:       "arc-1",
 		Place:     "place-1",
 		Thing:     "thing-1",
 	}
@@ -54,9 +53,6 @@ func TestSaveAndLoadContext(t *testing.T) {
 	}
 	if loaded.Person != ctx.Person {
 		t.Errorf("active_person: got %q", loaded.Person)
-	}
-	if loaded.Arc != ctx.Arc {
-		t.Errorf("active_arc: got %q", loaded.Arc)
 	}
 	if loaded.Place != ctx.Place {
 		t.Errorf("active_place: got %q", loaded.Place)
@@ -91,7 +87,6 @@ func TestSaveContext_CascadeReset_IdeaUse(t *testing.T) {
 		Workspace: "ws",
 		Idea:      "old-idea",
 		Person:    "old-person",
-		Arc:       "old-arc",
 		Place:     "old-place",
 		Thing:     "old-thing",
 	}
@@ -101,7 +96,6 @@ func TestSaveContext_CascadeReset_IdeaUse(t *testing.T) {
 
 	ctx.Idea = "new-idea"
 	ctx.Person = ""
-	ctx.Arc = ""
 	ctx.Place = ""
 	ctx.Thing = ""
 	if err := SaveContext(ctx); err != nil {
@@ -112,7 +106,7 @@ func TestSaveContext_CascadeReset_IdeaUse(t *testing.T) {
 	if loaded.Idea != "new-idea" {
 		t.Errorf("active_idea: got %q", loaded.Idea)
 	}
-	if loaded.Person != "" || loaded.Arc != "" || loaded.Place != "" || loaded.Thing != "" {
+	if loaded.Person != "" || loaded.Place != "" || loaded.Thing != "" {
 		t.Error("downstream context not cleared after idea use")
 	}
 }

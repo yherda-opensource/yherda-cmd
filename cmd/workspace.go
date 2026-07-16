@@ -17,7 +17,7 @@ The workspace name and its API server are looked up from your account and
 stored in .yherda in the current directory. All subsequent API calls route to
 the workspace's API server.
 
-Switching workspaces clears the active idea/person/arc/place/thing context,
+Switching workspaces clears the active idea/person/place/thing context,
 since those are scoped to a workspace. Run 'yherda workspacelist' to see
 which workspaces are available to you.`,
 	Args: cobra.MaximumNArgs(1),
@@ -58,7 +58,6 @@ which workspaces are available to you.`,
 			ctx.APIServer = apiServer
 			ctx.Idea = ""
 			ctx.Person = ""
-			ctx.Arc = ""
 			ctx.Place = ""
 			ctx.Thing = ""
 			if err := config.SaveContext(ctx); err != nil {

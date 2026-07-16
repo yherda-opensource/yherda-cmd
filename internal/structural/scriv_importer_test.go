@@ -109,6 +109,8 @@ func TestScrivImporter_CharacterFolder(t *testing.T) {
 }
 
 func TestScrivImporter_ManuscriptFolder(t *testing.T) {
+	// GEN-555: Arc/Beat removed. Manuscript scenes are preserved as unmapped
+	// idea documents pending a future structural rebuild.
 	dir := makeScrivFixture(t, minimalScrivx, map[string]string{
 		"Files/Data/beat-001/content.rtf": `{\rtf1 Opening content}`,
 	})
@@ -118,23 +120,21 @@ func TestScrivImporter_ManuscriptFolder(t *testing.T) {
 		t.Fatalf("Import error: %v", err)
 	}
 
-	if got := len(graph.Arcs); got != 1 {
-		t.Errorf("arcs: got %d, want 1", got)
-	}
-	if got := strField(graph.Arcs[0], "name"); got != "Act One" {
-		t.Errorf("arc name: got %q, want %q", got, "Act One")
-	}
-
-	if got := len(graph.Beats); got != 2 {
-		t.Errorf("beats: got %d, want 2", got)
-	}
-
-	// Beat should have arc reference.
-	arcSrcID := strField(graph.Arcs[0], "_id")
-	for _, beat := range graph.Beats {
-		if strField(beat, "_arc_id") != arcSrcID {
-			t.Errorf("beat %q has wrong _arc_id", strField(beat, "name"))
+	var sceneTitles []string
+	for _, doc := range graph.Docs {
+		if strField(doc, "_unmapped") == "true" {
+			sceneTitles = append(sceneTitles, strField(doc, "title"))
 		}
+	}
+	if len(sceneTitles) != 3 {
+		t.Fatalf("unmapped docs: got %d, want 3 (2 scenes + Dedication)", len(sceneTitles))
+	}
+	found := map[string]bool{}
+	for _, title := range sceneTitles {
+		found[title] = true
+	}
+	if !found["Opening scene"] || !found["Inciting incident"] {
+		t.Errorf("expected manuscript scenes among unmapped docs, got %v", sceneTitles)
 	}
 }
 
@@ -174,11 +174,17 @@ func TestScrivImporter_UnmappedItemsPreserved(t *testing.T) {
 			unmapped = append(unmapped, doc)
 		}
 	}
-	if got := len(unmapped); got != 1 {
-		t.Errorf("unmapped docs: got %d, want 1 (Front Matter/Dedication)", got)
+	// Manuscript scenes (2) are also unmapped now that Arc/Beat is gone (GEN-555),
+	// plus Front Matter/Dedication.
+	if got := len(unmapped); got != 3 {
+		t.Errorf("unmapped docs: got %d, want 3", got)
 	}
-	if got := strField(unmapped[0], "title"); got != "Dedication" {
-		t.Errorf("unmapped doc title: got %q, want %q", got, "Dedication")
+	found := map[string]bool{}
+	for _, doc := range unmapped {
+		found[strField(doc, "title")] = true
+	}
+	if !found["Dedication"] {
+		t.Errorf("expected Dedication among unmapped docs, got %v", found)
 	}
 }
 
@@ -193,17 +199,17 @@ func TestScrivImporter_RTFContent(t *testing.T) {
 	}
 
 	found := false
-	for _, beat := range graph.Beats {
-		if strField(beat, "name") == "Opening scene" {
-			desc := strField(beat, "description")
-			if desc == "" {
-				t.Error("expected non-empty description for beat with RTF content")
+	for _, doc := range graph.Docs {
+		if strField(doc, "title") == "Opening scene" {
+			body := strField(doc, "body")
+			if body == "" {
+				t.Error("expected non-empty body for scene with RTF content")
 			}
 			found = true
 		}
 	}
 	if !found {
-		t.Error("beat 'Opening scene' not found in graph")
+		t.Error("scene 'Opening scene' not found in graph")
 	}
 }
 

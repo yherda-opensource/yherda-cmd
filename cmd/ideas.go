@@ -70,7 +70,7 @@ var ideasShowCmd = &cobra.Command{
 var ideasCreateCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "Create a new idea",
-	Long:    "Creates a new idea and sets it as the active idea (clearing any active person/arc/place/thing).",
+	Long:    "Creates a new idea and sets it as the active idea (clearing any active person/place/thing).",
 	Example: `  yherda ideas create --name "The Long Way Home"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, _ := cmd.Flags().GetString("name")
@@ -89,7 +89,6 @@ var ideasCreateCmd = &cobra.Command{
 			}
 			ctx.Idea = id
 			ctx.Person = ""
-			ctx.Arc = ""
 			ctx.Place = ""
 			ctx.Thing = ""
 			_ = config.SaveContext(ctx)
@@ -102,7 +101,7 @@ var ideasCreateCmd = &cobra.Command{
 var ideasUseCmd = &cobra.Command{
 	Use:     "use <id>",
 	Short:   "Set the active idea",
-	Long:    "Sets the active idea, stored in the .yherda context file. Clears any active person/arc/place/thing, since those belong to a specific idea.",
+	Long:    "Sets the active idea, stored in the .yherda context file. Clears any active person/place/thing, since those belong to a specific idea.",
 	Example: `  yherda ideas use 42`,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -112,7 +111,6 @@ var ideasUseCmd = &cobra.Command{
 		}
 		ctx.Idea = args[0]
 		ctx.Person = ""
-		ctx.Arc = ""
 		ctx.Place = ""
 		ctx.Thing = ""
 		if err := config.SaveContext(ctx); err != nil {

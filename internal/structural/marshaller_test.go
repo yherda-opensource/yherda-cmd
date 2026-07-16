@@ -62,12 +62,6 @@ func TestMarshal_DependencyOrder(t *testing.T) {
 		Identities: []map[string]any{
 			{"_id": "ident-1", "name": "Alice"},
 		},
-		Arcs: []map[string]any{
-			{"_id": "arc-1", "_identity_id": "ident-1", "name": "The Journey"},
-		},
-		Beats: []map[string]any{
-			{"_arc_id": "arc-1", "name": "First step"},
-		},
 		Places: []map[string]any{
 			{"name": "The Forest"},
 		},
@@ -85,17 +79,11 @@ func TestMarshal_DependencyOrder(t *testing.T) {
 	}
 
 	// Verify something was posted to each entity type.
-	if len(poster.pathsContaining("roles")) == 0 {
-		t.Error("expected POST to /roles/")
+	if len(poster.pathsContaining("persons")) == 0 {
+		t.Error("expected POST to /persons/")
 	}
 	if len(poster.pathsContaining("identities")) == 0 {
 		t.Error("expected POST to /identities/")
-	}
-	if len(poster.pathsContaining("arcs")) == 0 {
-		t.Error("expected POST to /arcs/")
-	}
-	if len(poster.pathsContaining("beats")) == 0 {
-		t.Error("expected POST to /beats/")
 	}
 	if len(poster.pathsContaining("places")) == 0 {
 		t.Error("expected POST to /places/")
@@ -107,65 +95,18 @@ func TestMarshal_DependencyOrder(t *testing.T) {
 		t.Error("expected POST to /documents/")
 	}
 
-	// Verify ordering: role before arc, arc before beat.
-	roleIdx, arcIdx, beatIdx := -1, -1, -1
+	// Verify ordering: person before identity.
+	personIdx, identityIdx := -1, -1
 	for i, c := range poster.calls {
-		if contains(c.path, "roles") && roleIdx < 0 {
-			roleIdx = i
+		if contains(c.path, "persons") && personIdx < 0 {
+			personIdx = i
 		}
-		if contains(c.path, "arcs") && arcIdx < 0 {
-			arcIdx = i
-		}
-		if contains(c.path, "beats") && beatIdx < 0 {
-			beatIdx = i
+		if contains(c.path, "identities") && identityIdx < 0 {
+			identityIdx = i
 		}
 	}
-	if roleIdx >= arcIdx {
-		t.Errorf("role POST (idx %d) must come before arc POST (idx %d)", roleIdx, arcIdx)
-	}
-	if arcIdx >= beatIdx {
-		t.Errorf("arc POST (idx %d) must come before beat POST (idx %d)", arcIdx, beatIdx)
-	}
-}
-
-func TestMarshal_IDMapCorrectness(t *testing.T) {
-	// The arc must reference the platform-assigned role ID, not the scriv UUID.
-	graph := IdeaGraph{
-		PluginData: map[string]any{},
-		Identities: []map[string]any{
-			{"_id": "scriv-char-001", "name": "Alice"},
-		},
-		Arcs: []map[string]any{
-			{"_id": "scriv-arc-001", "_identity_id": "scriv-char-001", "name": "Arc One"},
-		},
-	}
-
-	poster := &stubPoster{}
-	if err := Marshal(poster, graph, "99"); err != nil {
-		t.Fatalf("Marshal error: %v", err)
-	}
-
-	// The arc POST should be under /role/{platformRoleID}/arcs/, not /role/scriv-char-001/arcs/.
-	for _, c := range poster.calls {
-		if contains(c.path, "arcs") {
-			if contains(c.path, "scriv-char-001") {
-				t.Errorf("arc POST used scriv UUID in path: %s", c.path)
-			}
-		}
-	}
-}
-
-func TestMarshal_UnknownArcReference(t *testing.T) {
-	graph := IdeaGraph{
-		PluginData: map[string]any{},
-		Beats: []map[string]any{
-			{"_arc_id": "nonexistent-arc", "name": "Orphan beat"},
-		},
-	}
-	poster := &stubPoster{}
-	err := Marshal(poster, graph, "42")
-	if err == nil {
-		t.Error("expected error for beat referencing unknown arc")
+	if personIdx >= identityIdx {
+		t.Errorf("person POST (idx %d) must come before identity POST (idx %d)", personIdx, identityIdx)
 	}
 }
 

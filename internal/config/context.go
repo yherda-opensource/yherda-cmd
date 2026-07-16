@@ -10,7 +10,6 @@ type Context struct {
 	APIServer string `json:"api_server,omitempty"`
 	Idea      string `json:"active_idea,omitempty"`
 	Person    string `json:"active_person,omitempty"`
-	Arc       string `json:"active_arc,omitempty"`
 	Place     string `json:"active_place,omitempty"`
 	Thing     string `json:"active_thing,omitempty"`
 }
