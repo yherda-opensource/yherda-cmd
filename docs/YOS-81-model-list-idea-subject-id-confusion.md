@@ -22,6 +22,12 @@ Wired into every command that acts on a bare Subject id:
 
 `createGoalOnSubject`'s existing has_self:false confirmation check already fetches the Subject — that GET's response is reused to print the confirmation line rather than fetching twice; the `--yes`/skip-confirm path calls `printSubjectContext` separately since no GET happens otherwise.
 
+## Fix 3: Context footer shows the active Subject's full row
+
+Added at Shawn's request while reviewing the first two fixes: the shared context footer (`printContext()`, printed at the end of most commands) previously showed only the bare `ctx.Subject` id (`subject: 42`). It now fetches and shows the same row `model list` shows for a Subject — id, name, subject_type, has_perspective, has_self — via a new `subjectContextLabel(subjectID string) string` helper. Fetched live (not cached) each time the footer prints, so a Subject renamed elsewhere doesn't show stale data; falls back silently to the bare id if the fetch fails (no credentials, no server reachable, etc.) rather than breaking the command's primary output over a secondary lookup failing.
+
+This applies globally — any command that calls `printContext()` (not just `model` commands) will show the active Subject's full row once `model use` has been run, the same way `state`/`goal`/etc. already appear in the footer once set.
+
 ## Out of scope
 
 No backend changes. No new confirmation prompts. No hard blocking of any id — every `model` command still accepts a bare Subject id and works on any subtype.
@@ -29,7 +35,7 @@ No backend changes. No new confirmation prompts. No hard blocking of any id — 
 ## Implementation notes
 
 - `cmd/model.go`: `model list`'s fallback branch rewritten to call `/idea/` directly instead of delegating to `ideasListCmd.RunE`.
-- `cmd/root.go`: new `printSubjectContext` helper, placed alongside `printContext`/`confirm`.
+- `cmd/root.go`: new `printSubjectContext` helper (per-command confirmation line) and `subjectContextLabel` helper (footer row), placed alongside `printContext`/`confirm`.
 - Test file `cmd/model_subject_context_test.go` introduces `captureStdout` (an `os.Pipe`-based stdout capture helper) — a deliberate, minimal deviation from this suite's usual error-return-only assertion style, since this bug is specifically about output *text* being misleading, and the fix has to be verified by reading that text.
 
 Full ticket: https://momentsbyshawn.atlassian.net/browse/YOS-81

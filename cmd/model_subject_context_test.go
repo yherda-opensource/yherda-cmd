@@ -108,3 +108,40 @@ func TestModelPerspectiveGet_JSONMode_SkipsSubjectContextLine(t *testing.T) {
 		t.Errorf("--json mode should not print the human-readable Subject confirmation line, got: %q", out)
 	}
 }
+
+// --- context footer shows the active Subject's full row ---
+
+func TestSubjectContextLabel_Empty_ReturnsEmpty(t *testing.T) {
+	if got := subjectContextLabel(""); got != "" {
+		t.Errorf("subjectContextLabel(\"\") = %q, want empty", got)
+	}
+}
+
+func TestSubjectContextLabel_NoCreds_FallsBackToBareID(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+
+	got := subjectContextLabel("42")
+	if got != "42" {
+		t.Errorf("subjectContextLabel with no credentials should fall back to the bare id, got %q", got)
+	}
+}
+
+func TestSubjectContextLabel_FetchFails_FallsBackToBareID(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+
+	got := subjectContextLabel("42")
+	if got != "42" {
+		t.Errorf("subjectContextLabel should fall back to the bare id when the fetch fails, got %q", got)
+	}
+}
+
+func TestPrintContext_SubjectSet_DoesNotPanic(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	captureStdout(t, func() {
+		printContext()
+	})
+}

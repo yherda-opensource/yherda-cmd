@@ -106,7 +106,7 @@ func printContext() {
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
-		{"subject", ctx.Subject},
+		{"subject", subjectContextLabel(ctx.Subject)},
 	}
 	var parts []string
 	for _, f := range fields {
@@ -118,6 +118,40 @@ func printContext() {
 		fmt.Println()
 		fmt.Println("context: " + joinStrings(parts, " | "))
 	}
+}
+
+// subjectContextLabel renders the active Subject's full row for the context
+// footer — the same fields 'model list' shows (id, name, subject_type,
+// has_perspective, has_self) — not just the bare id, since a bare id alone
+// doesn't tell the user what they're actually pointed at (see YOS-81).
+// Fetched live rather than cached, so a Subject renamed elsewhere doesn't
+// show stale data in the footer. Falls back to the bare id if the fetch
+// fails, since a secondary lookup failing shouldn't break the command's
+// primary output.
+func subjectContextLabel(subjectID string) string {
+	if subjectID == "" {
+		return ""
+	}
+	creds, err := config.LoadCredentials()
+	if err != nil || creds == nil {
+		return subjectID
+	}
+	loadedCtx, err := config.LoadContext()
+	if err != nil || loadedCtx.Workspace == "" || loadedCtx.APIServer == "" {
+		return subjectID
+	}
+	client := api.New(loadedCtx.APIServer, creds)
+	var subject map[string]any
+	if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
+		return subjectID
+	}
+	name := strField(subject, "name")
+	subjectType := strField(subject, "subject_type")
+	if name == "" && subjectType == "" {
+		return subjectID
+	}
+	return fmt.Sprintf("%s %q (%s, has_perspective: %s, has_self: %s)",
+		subjectID, name, subjectType, strField(subject, "has_perspective"), strField(subject, "has_self"))
 }
 
 func joinStrings(ss []string, sep string) string {
