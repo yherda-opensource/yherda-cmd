@@ -17,18 +17,27 @@ var modelCmd = &cobra.Command{
 	Long:  "The model command family operates on the platform's Subject base class, working the same way regardless of concrete subtype (Person/Place/Thing/Identity/Disposition/Goal/Step/Belief).",
 }
 
+// resolveSubjectID resolves the target Subject id for a bare-Subject-id
+// command: an explicit arg always wins, but also resets the breadcrumb
+// stack to just that id (a one-off override starts a fresh trail rather
+// than drilling deeper into whatever trail 'model use' had built up).
+// With no arg, it reads the top of the stack, unchanged.
 func resolveSubjectID(args []string) (string, error) {
-	if len(args) > 0 {
-		return args[0], nil
-	}
 	ctx, err := config.LoadContext()
 	if err != nil {
 		return "", err
 	}
-	if ctx.Subject == "" {
+	if len(args) > 0 {
+		ctx.ResetSubject(args[0])
+		if err := config.SaveContext(ctx); err != nil {
+			return "", err
+		}
+		return args[0], nil
+	}
+	if ctx.Subject() == "" {
 		return "", fmt.Errorf("no active subject — pass a subject id or run 'yherda model use <subject-id>'")
 	}
-	return ctx.Subject, nil
+	return ctx.Subject(), nil
 }
 
 var modelShowCmd = &cobra.Command{
@@ -139,22 +148,70 @@ var modelListCmd = &cobra.Command{
 }
 
 var modelUseCmd = &cobra.Command{
-	Use:   "use <subject-id>",
-	Short: "Set the active Subject",
-	Long: "Sets the active Subject in context. Does not clear active person/place/thing/state/goal — the active " +
-		"Subject is orthogonal to those, not a replacement for any of them.",
-	Example: `  yherda model use 42`,
-	Args:    cobra.ExactArgs(1),
+	Use:   "use [<subject-id>]",
+	Short: "Set the active Subject, or show the current breadcrumb stack",
+	Long: "Pushes a Subject onto the active-Subject breadcrumb stack, making it active. Does not clear active " +
+		"person/place/thing/state/goal — the active Subject is orthogonal to those, not a replacement for any of " +
+		"them. With no id, prints the current breadcrumb stack instead. Use 'model back' to pop back to the " +
+		"previous Subject.",
+	Example: `  yherda model use 42
+  yherda model use`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := config.LoadContext()
 		if err != nil {
 			return err
 		}
-		ctx.Subject = args[0]
+		if len(args) == 0 {
+			if len(ctx.SubjectStack) == 0 {
+				fmt.Println("No active subject stack.")
+				return nil
+			}
+			fmt.Printf("Subject stack: %s (active)\n", breadcrumbTrail(ctx.SubjectStack))
+			return nil
+		}
+		ctx.PushSubject(args[0])
 		if err := config.SaveContext(ctx); err != nil {
 			return err
 		}
 		fmt.Printf("Active subject set to %s\n", args[0])
+		return nil
+	},
+}
+
+// breadcrumbTrail renders a Subject stack bottom-to-top, e.g. "1 -> 7 -> 42".
+func breadcrumbTrail(stack []string) string {
+	trail := stack[0]
+	for _, id := range stack[1:] {
+		trail += " -> " + id
+	}
+	return trail
+}
+
+var modelBackCmd = &cobra.Command{
+	Use:   "back",
+	Short: "Pop the active Subject, returning to the previous one",
+	Long: "Pops the top of the active-Subject breadcrumb stack, returning to whichever Subject was active before " +
+		"the last 'model use'. Errors if there is nothing to go back to.",
+	Example: `  yherda model back`,
+	Args:    cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, err := config.LoadContext()
+		if err != nil {
+			return err
+		}
+		popped, ok := ctx.PopSubject()
+		if !ok {
+			return fmt.Errorf("no previous subject to go back to")
+		}
+		if err := config.SaveContext(ctx); err != nil {
+			return err
+		}
+		if newTop := ctx.Subject(); newTop != "" {
+			fmt.Printf("Left subject %s, active subject is now %s\n", popped, newTop)
+		} else {
+			fmt.Printf("Left subject %s, no active subject remains\n", popped)
+		}
 		return nil
 	},
 }
@@ -486,5 +543,5 @@ func init() {
 	modelStatesDispositionsCmd.AddCommand(modelStatesDispositionsListCmd, modelStatesDispositionsSetCmd, modelStatesDispositionsUnsetCmd)
 	modelStatesCmd.AddCommand(modelStatesListCmd, modelStatesCreateCmd, modelStatesDeleteCmd, modelStatesUseCmd, modelStatesDispositionsCmd)
 
-	modelCmd.AddCommand(modelShowCmd, modelListCmd, modelUseCmd, modelDispositionsCmd, modelStatesCmd)
+	modelCmd.AddCommand(modelShowCmd, modelListCmd, modelUseCmd, modelBackCmd, modelDispositionsCmd, modelStatesCmd)
 }

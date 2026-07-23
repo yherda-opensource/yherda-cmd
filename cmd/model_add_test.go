@@ -31,7 +31,7 @@ func TestModelAddPerspective_ExplicitSubjectID_ReachesAPI(t *testing.T) {
 
 func TestModelAddPerspective_ContextSubject_ReachesAPI(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "subject-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"subject-1"}})
 
 	rootCmd.SetArgs([]string{"model", "add", "perspective"})
 	err := rootCmd.Execute()
@@ -68,7 +68,7 @@ func TestModelAddGoal_ExplicitSubjectID_SkipConfirm_ReachesAPIDirectly(t *testin
 
 func TestModelAddGoal_ContextSubject_SkipConfirm_ReachesAPIDirectly(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "subject-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"subject-1"}})
 
 	rootCmd.SetArgs([]string{"model", "add", "goal", "--want", "To find her father", "--yes"})
 	err := rootCmd.Execute()
@@ -79,7 +79,7 @@ func TestModelAddGoal_ContextSubject_SkipConfirm_ReachesAPIDirectly(t *testing.T
 
 func TestModelAddGoal_EmptyWant_WarnsButProceeds(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "subject-1"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"subject-1"}})
 
 	rootCmd.SetArgs([]string{"model", "add", "goal", "--yes"})
 	err := rootCmd.Execute()

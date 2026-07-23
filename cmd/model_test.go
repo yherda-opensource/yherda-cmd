@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
@@ -95,8 +96,8 @@ func TestModelUse_SetsSubjectOnly_DoesNotClearPersonPlaceThingStateGoal(t *testi
 	}
 
 	loaded, _ := config.LoadContext()
-	if loaded.Subject != "subject-1" {
-		t.Errorf("active_subject: got %q, want %q", loaded.Subject, "subject-1")
+	if loaded.Subject() != "subject-1" {
+		t.Errorf("active_subject: got %q, want %q", loaded.Subject(), "subject-1")
 	}
 	if loaded.Person != "person-1" {
 		t.Errorf("active_person should be unchanged, got %q", loaded.Person)
@@ -115,13 +116,114 @@ func TestModelUse_SetsSubjectOnly_DoesNotClearPersonPlaceThingStateGoal(t *testi
 	}
 }
 
-func TestModelUse_MissingID_Error(t *testing.T) {
+func TestModelUse_NoArgs_EmptyStack_PrintsNoActiveSubject(t *testing.T) {
 	withTempHome(t)
 	saveContext(t, &config.Context{Workspace: "ws"})
 
-	rootCmd.SetArgs([]string{"model", "use"})
+	out := captureStdout(t, func() {
+		rootCmd.SetArgs([]string{"model", "use"})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if !bytes.Contains([]byte(out), []byte("No active subject stack")) {
+		t.Errorf("expected 'No active subject stack' message, got: %q", out)
+	}
+}
+
+func TestModelUse_Twice_PushesBothOntoStack(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws"})
+
+	rootCmd.SetArgs([]string{"model", "use", "person-1"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	rootCmd.SetArgs([]string{"model", "use", "disposition-7"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	loaded, _ := config.LoadContext()
+	if loaded.Subject() != "disposition-7" {
+		t.Errorf("top of stack = %q, want %q", loaded.Subject(), "disposition-7")
+	}
+	if len(loaded.SubjectStack) != 2 {
+		t.Errorf("stack length = %d, want 2", len(loaded.SubjectStack))
+	}
+	if loaded.SubjectStack[0] != "person-1" {
+		t.Errorf("bottom of stack = %q, want %q", loaded.SubjectStack[0], "person-1")
+	}
+}
+
+func TestModelUse_NoArgs_NonEmptyStack_PrintsTrail(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"person-1", "disposition-7"}})
+
+	out := captureStdout(t, func() {
+		rootCmd.SetArgs([]string{"model", "use"})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if !bytes.Contains([]byte(out), []byte("person-1 -> disposition-7")) {
+		t.Errorf("expected breadcrumb trail in output, got: %q", out)
+	}
+}
+
+// --- model back ---
+
+func TestModelBack_MultiItemStack_PopsToPrevious(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"person-1", "disposition-7"}})
+
+	out := captureStdout(t, func() {
+		rootCmd.SetArgs([]string{"model", "back"})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if !bytes.Contains([]byte(out), []byte("disposition-7")) || !bytes.Contains([]byte(out), []byte("person-1")) {
+		t.Errorf("expected both popped and new-active subject in output, got: %q", out)
+	}
+
+	loaded, _ := config.LoadContext()
+	if loaded.Subject() != "person-1" {
+		t.Errorf("active subject after back = %q, want %q", loaded.Subject(), "person-1")
+	}
+}
+
+func TestModelBack_SingleItemStack_PopsToEmpty_NotAnError(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"person-1"}})
+
+	out := captureStdout(t, func() {
+		rootCmd.SetArgs([]string{"model", "back"})
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if !bytes.Contains([]byte(out), []byte("no active subject remains")) {
+		t.Errorf("expected 'no active subject remains' message, got: %q", out)
+	}
+
+	loaded, _ := config.LoadContext()
+	if loaded.Subject() != "" {
+		t.Errorf("active subject after popping only item = %q, want empty", loaded.Subject())
+	}
+}
+
+func TestModelBack_EmptyStack_ReturnsError(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws"})
+
+	rootCmd.SetArgs([]string{"model", "back"})
 	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when subject id arg is missing")
+		t.Fatal("expected an error when there is nothing to go back to")
 	}
 }
 

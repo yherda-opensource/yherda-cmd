@@ -28,15 +28,15 @@ func TestSaveAndLoadContext(t *testing.T) {
 	withTempDir(t)
 
 	ctx := &Context{
-		Workspace: "ws",
-		APIServer: "https://ws.example.com",
-		Idea:      "idea-1",
-		Person:    "person-1",
-		Place:     "place-1",
-		Thing:     "thing-1",
-		State:     "state-1",
-		Goal:      "goal-1",
-		Subject:   "subject-1",
+		Workspace:    "ws",
+		APIServer:    "https://ws.example.com",
+		Idea:         "idea-1",
+		Person:       "person-1",
+		Place:        "place-1",
+		Thing:        "thing-1",
+		State:        "state-1",
+		Goal:         "goal-1",
+		SubjectStack: []string{"subject-1"},
 	}
 	if err := SaveContext(ctx); err != nil {
 		t.Fatalf("SaveContext: %v", err)
@@ -69,8 +69,8 @@ func TestSaveAndLoadContext(t *testing.T) {
 	if loaded.Goal != ctx.Goal {
 		t.Errorf("active_goal: got %q, want %q", loaded.Goal, ctx.Goal)
 	}
-	if loaded.Subject != ctx.Subject {
-		t.Errorf("active_subject: got %q, want %q", loaded.Subject, ctx.Subject)
+	if loaded.Subject() != ctx.Subject() {
+		t.Errorf("active_subject_stack: got %q, want %q", loaded.Subject(), ctx.Subject())
 	}
 }
 
@@ -90,8 +90,8 @@ func TestSaveContext_StateOmittedWhenUnset(t *testing.T) {
 	if loaded.Goal != "" {
 		t.Errorf("active_goal should be empty when unset, got %q", loaded.Goal)
 	}
-	if loaded.Subject != "" {
-		t.Errorf("active_subject should be empty when unset, got %q", loaded.Subject)
+	if loaded.Subject() != "" {
+		t.Errorf("active_subject_stack should be empty when unset, got %q", loaded.Subject())
 	}
 }
 
@@ -141,5 +141,80 @@ func TestSaveContext_CascadeReset_IdeaUse(t *testing.T) {
 	}
 	if loaded.Person != "" || loaded.Place != "" || loaded.Thing != "" {
 		t.Error("downstream context not cleared after idea use")
+	}
+}
+
+// --- Subject breadcrumb stack (YOS-83) ---
+
+func TestContext_Subject_EmptyStack(t *testing.T) {
+	ctx := &Context{}
+	if got := ctx.Subject(); got != "" {
+		t.Errorf("Subject() on empty stack = %q, want empty", got)
+	}
+}
+
+func TestContext_Subject_ReturnsTop(t *testing.T) {
+	ctx := &Context{SubjectStack: []string{"1", "7", "42"}}
+	if got := ctx.Subject(); got != "42" {
+		t.Errorf("Subject() = %q, want %q", got, "42")
+	}
+}
+
+func TestContext_PushSubject_AppendsToTop(t *testing.T) {
+	ctx := &Context{SubjectStack: []string{"1"}}
+	ctx.PushSubject("7")
+	ctx.PushSubject("42")
+	if got := ctx.Subject(); got != "42" {
+		t.Errorf("Subject() after pushes = %q, want %q", got, "42")
+	}
+	if len(ctx.SubjectStack) != 3 {
+		t.Errorf("SubjectStack length = %d, want 3", len(ctx.SubjectStack))
+	}
+}
+
+func TestContext_PopSubject_MultiItem_ReturnsToPrevious(t *testing.T) {
+	ctx := &Context{SubjectStack: []string{"1", "7", "42"}}
+	popped, ok := ctx.PopSubject()
+	if !ok {
+		t.Fatal("PopSubject() ok = false, want true")
+	}
+	if popped != "42" {
+		t.Errorf("popped = %q, want %q", popped, "42")
+	}
+	if got := ctx.Subject(); got != "7" {
+		t.Errorf("Subject() after pop = %q, want %q", got, "7")
+	}
+}
+
+func TestContext_PopSubject_SingleItem_PopsToEmpty(t *testing.T) {
+	ctx := &Context{SubjectStack: []string{"42"}}
+	popped, ok := ctx.PopSubject()
+	if !ok {
+		t.Fatal("PopSubject() ok = false, want true")
+	}
+	if popped != "42" {
+		t.Errorf("popped = %q, want %q", popped, "42")
+	}
+	if got := ctx.Subject(); got != "" {
+		t.Errorf("Subject() after popping only item = %q, want empty", got)
+	}
+}
+
+func TestContext_PopSubject_EmptyStack_ReturnsNotOK(t *testing.T) {
+	ctx := &Context{}
+	_, ok := ctx.PopSubject()
+	if ok {
+		t.Error("PopSubject() on empty stack ok = true, want false")
+	}
+}
+
+func TestContext_ResetSubject_DiscardsExistingTrail(t *testing.T) {
+	ctx := &Context{SubjectStack: []string{"1", "7"}}
+	ctx.ResetSubject("99")
+	if got := ctx.Subject(); got != "99" {
+		t.Errorf("Subject() after ResetSubject = %q, want %q", got, "99")
+	}
+	if len(ctx.SubjectStack) != 1 {
+		t.Errorf("SubjectStack length after reset = %d, want 1", len(ctx.SubjectStack))
 	}
 }

@@ -153,7 +153,7 @@ func TestSubjectContextLabel_FetchFails_FallsBackToBareID(t *testing.T) {
 
 func TestPrintContext_SubjectSet_DoesNotPanic(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	captureStdout(t, func() {
 		printContext()
@@ -176,7 +176,7 @@ func TestPrintContextWithSubject_DoesNotPanic(t *testing.T) {
 
 func TestResolveSubjectID_ExplicitArg_WinsOverContext(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", Subject: "99"})
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"99"}})
 
 	got, err := resolveSubjectID([]string{"42"})
 	if err != nil {
@@ -187,9 +187,26 @@ func TestResolveSubjectID_ExplicitArg_WinsOverContext(t *testing.T) {
 	}
 }
 
+func TestResolveSubjectID_ExplicitArg_ResetsExistingStack(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"person-1", "disposition-7"}})
+
+	if _, err := resolveSubjectID([]string{"99"}); err != nil {
+		t.Fatalf("resolveSubjectID: %v", err)
+	}
+
+	loaded, _ := config.LoadContext()
+	if loaded.Subject() != "99" {
+		t.Errorf("stack top after explicit override = %q, want %q", loaded.Subject(), "99")
+	}
+	if len(loaded.SubjectStack) != 1 {
+		t.Errorf("stack should be reset to a single item, got %v", loaded.SubjectStack)
+	}
+}
+
 func TestResolveSubjectID_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContext(t, &config.Context{Workspace: "ws", Subject: "99"})
+	saveContext(t, &config.Context{Workspace: "ws", SubjectStack: []string{"99"}})
 
 	got, err := resolveSubjectID(nil)
 	if err != nil {
@@ -221,7 +238,7 @@ func TestResolveSubjectID_NoArgNoContext_ReturnsClearError(t *testing.T) {
 
 func TestModelShow_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "show"})
 	err := rootCmd.Execute()
@@ -246,7 +263,7 @@ func TestModelShow_NoArgNoContext_ReturnsFallbackError(t *testing.T) {
 
 func TestModelDispositionsList_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "dispositions", "list"})
 	err := rootCmd.Execute()
@@ -260,7 +277,7 @@ func TestModelDispositionsList_NoArg_FallsBackToContext(t *testing.T) {
 
 func TestModelStatesList_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "states", "list"})
 	err := rootCmd.Execute()
@@ -274,7 +291,7 @@ func TestModelStatesList_NoArg_FallsBackToContext(t *testing.T) {
 
 func TestModelPerspectiveGet_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "perspective", "get"})
 	err := rootCmd.Execute()
@@ -288,7 +305,7 @@ func TestModelPerspectiveGet_NoArg_FallsBackToContext(t *testing.T) {
 
 func TestModelGoalsList_NoArg_FallsBackToContext(t *testing.T) {
 	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "goals", "list"})
 	err := rootCmd.Execute()
