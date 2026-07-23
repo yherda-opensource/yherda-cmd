@@ -24,9 +24,6 @@ var modelGoalsListCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		var result []map[string]any
 		if err := client.Get("/subject/"+args[0]+"/goals/", &result); err != nil {
 			return err
@@ -42,6 +39,7 @@ var modelGoalsListCmd = &cobra.Command{
 				strField(row, "id"), strField(row, "want"), strField(row, "need"), strField(row, "tragedy"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -80,9 +78,6 @@ func createGoalOnSubject(subjectID string, skipConfirm bool) error {
 		if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
 			return err
 		}
-		if !jsonOutput {
-			fmt.Printf("Subject: #%s %q (%s)\n", subjectID, strField(subject, "name"), strField(subject, "subject_type"))
-		}
 		hasSelf := subject["has_self"] == true
 		if !hasSelf {
 			name := strField(subject, "name")
@@ -95,8 +90,6 @@ func createGoalOnSubject(subjectID string, skipConfirm bool) error {
 				return fmt.Errorf("aborted")
 			}
 		}
-	} else if err := printSubjectContext(client, subjectID); err != nil {
-		return err
 	}
 	body := map[string]any{
 		"want":        modelGoalWant,
@@ -109,6 +102,7 @@ func createGoalOnSubject(subjectID string, skipConfirm bool) error {
 		return err
 	}
 	printJSON(result)
+	printContextWithSubject(client, subjectID)
 	return nil
 }
 

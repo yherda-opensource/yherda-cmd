@@ -98,6 +98,14 @@ func printContext() {
 	if err != nil {
 		return
 	}
+	printContextRow(ctx, subjectContextLabel)
+}
+
+// printContextRow prints the context summary line, given a function to
+// render the Subject field's label (so callers that already fetched the
+// Subject once — printContextWithSubject — can reuse that fetch instead of
+// calling subjectContextLabel and fetching it again).
+func printContextRow(ctx *config.Context, subjectLabel func(string) string) {
 	fields := []struct{ label, value string }{
 		{"workspace", ctx.Workspace},
 		{"idea", ctx.Idea},
@@ -106,7 +114,7 @@ func printContext() {
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
-		{"subject", subjectContextLabel(ctx.Subject)},
+		{"subject", subjectLabel(ctx.Subject)},
 	}
 	var parts []string
 	for _, f := range fields {
@@ -165,26 +173,42 @@ func joinStrings(ss []string, sep string) string {
 	return result
 }
 
-// printSubjectContext fetches and prints a one-line confirmation of what a
-// Subject id actually resolves to — "Subject: #<id> <name> (<subject_type>)"
-// — before a command acts on it. Every model command taking a bare Subject
-// id (explicit arg or resolved from context) calls this so a wrong-context
-// id (e.g. an Idea id copied from 'model list's fallback output) is visible
-// immediately rather than silently accepted. Skipped in --json mode, since
-// a JSON caller already knows what it asked for and a text line would just
-// pollute the output; --json callers wanting this should read the id back
-// from 'model show' themselves. Not a confirmation prompt — no blocking,
-// just visibility, per insight_cli_capability_grant_confirmation_pattern.md.
-func printSubjectContext(client *api.Client, subjectID string) error {
-	if jsonOutput {
-		return nil
+// printContextWithSubject prints the two-line footer: the record a command
+// just acted on (the Subject, resolved to its name/subject_type) as line 1,
+// then the usual context row as line 2. Every model command taking a bare
+// Subject id calls this after its own output instead of calling
+// printContext() directly, so a wrong-context id (e.g. an Idea id copied
+// from 'model list's fallback output) is visible immediately rather than
+// silently accepted — not a confirmation prompt, no blocking, just
+// visibility, per insight_cli_capability_grant_confirmation_pattern.md.
+// Skipped in --json mode, since a JSON caller already knows what it asked
+// for. Fetches subjectID once and reuses that row for the context row too
+// when it matches the active ctx.Subject, rather than fetching it twice.
+func printContextWithSubject(client *api.Client, subjectID string) {
+	if noContext || jsonOutput {
+		return
 	}
+	label := subjectID
 	var subject map[string]any
-	if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
-		return err
+	if err := client.Get("/subject/"+subjectID+"/", &subject); err == nil {
+		name := strField(subject, "name")
+		subjectType := strField(subject, "subject_type")
+		fmt.Printf("Subject: #%s %q (%s)\n", subjectID, name, subjectType)
+		if name != "" || subjectType != "" {
+			label = fmt.Sprintf("%s %q (%s, has_perspective: %s, has_self: %s)",
+				subjectID, name, subjectType, strField(subject, "has_perspective"), strField(subject, "has_self"))
+		}
 	}
-	fmt.Printf("Subject: #%s %q (%s)\n", subjectID, strField(subject, "name"), strField(subject, "subject_type"))
-	return nil
+	ctx, err := config.LoadContext()
+	if err != nil {
+		return
+	}
+	printContextRow(ctx, func(activeSubjectID string) string {
+		if activeSubjectID == subjectID {
+			return label
+		}
+		return subjectContextLabel(activeSubjectID)
+	})
 }
 
 // confirmReader is the source for confirm() prompts. Overridden in tests.

@@ -54,9 +54,6 @@ var modelAddPerspectiveCmd = &cobra.Command{
 			return err
 		}
 		client := mustClient()
-		if err := printSubjectContext(client, subjectID); err != nil {
-			return err
-		}
 		var result map[string]any
 		if err := client.Post("/subject/"+subjectID+"/perspective/", nil, &result); err != nil {
 			return err
@@ -70,6 +67,7 @@ var modelAddPerspectiveCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
 		}
 		w.Flush()
+		printContextWithSubject(client, subjectID)
 		return nil
 	},
 }

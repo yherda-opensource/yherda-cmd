@@ -158,9 +158,6 @@ var modelDispositionsListCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		var result []map[string]any
 		if err := client.Get("/subject/"+args[0]+"/dispositions/", &result); err != nil {
 			return err
@@ -175,6 +172,7 @@ var modelDispositionsListCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "type"), strField(row, "name"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -195,15 +193,13 @@ var modelDispositionsCreateCmd = &cobra.Command{
 			return fmt.Errorf("--name is required")
 		}
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		var result map[string]any
 		body := map[string]string{"type": modelDispositionType, "name": modelDispositionName}
 		if err := client.Post("/subject/"+args[0]+"/dispositions/", body, &result); err != nil {
 			return err
 		}
 		printJSON(result)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -218,14 +214,12 @@ var modelDispositionsDeleteCmd = &cobra.Command{
 			return fmt.Errorf("--disposition is required")
 		}
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		body := map[string]string{"disposition": modelDispositionDeleteID}
 		if err := client.Delete("/subject/"+args[0]+"/dispositions/", body); err != nil {
 			return err
 		}
 		fmt.Printf("Disposition %s deleted\n", modelDispositionDeleteID)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -247,9 +241,6 @@ var modelStatesListCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		var result []map[string]any
 		if err := client.Get("/subject/"+args[0]+"/states/", &result); err != nil {
 			return err
@@ -264,6 +255,7 @@ var modelStatesListCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -278,14 +270,12 @@ var modelStatesCreateCmd = &cobra.Command{
 			return fmt.Errorf("--name is required")
 		}
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		var result map[string]any
 		if err := client.Post("/subject/"+args[0]+"/states/", map[string]string{"name": modelStateName}, &result); err != nil {
 			return err
 		}
 		printJSON(result)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -300,14 +290,12 @@ var modelStatesDeleteCmd = &cobra.Command{
 			return fmt.Errorf("--state is required")
 		}
 		client := mustClient()
-		if err := printSubjectContext(client, args[0]); err != nil {
-			return err
-		}
 		body := map[string]string{"state": modelStateDeleteID}
 		if err := client.Delete("/subject/"+args[0]+"/states/", body); err != nil {
 			return err
 		}
 		fmt.Printf("State %s deleted\n", modelStateDeleteID)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }

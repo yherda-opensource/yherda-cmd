@@ -8,11 +8,21 @@ Found while dogfooding: `yherda model list` (no active idea) falls back to listi
 
 `model list`'s fallback no longer delegates to `ideasListCmd.RunE`. It now calls `GET /idea/` directly and renders its own table with `IDEA ID` as the column header (not `ID`), plus an explicit warning line printed before the table: "Note: the ids below are IDEA ids, not Subject ids — they are a different id space and will not work with 'model show' or other model commands."
 
-## Fix 2: Surface `subject_type` in every bare-Subject-id command's output
+## Fix 2 + 3: Two-line footer — the record acted on, then full context
 
-New shared helper `printSubjectContext(client *api.Client, subjectID string) error` in `cmd/root.go` — fetches `GET /api/subject/{id}/` and prints `Subject: #<id> "<name>" (<subject_type>)` before the command's own output. Skipped entirely in `--json` mode (a JSON caller already knows what it asked for; a text line would pollute the output). Not a confirmation prompt — no blocking, purely visibility.
+Revised during review (Shawn: "it could really be 2 lines. First line the record used after whatever the command was. Second line is a row of context showing all the ids... hopefully names if we have them"). Combined into one two-line footer, printed *after* a command's own output (not a pre-output confirmation line — that was the first pass, superseded here):
 
-Wired into every command that acts on a bare Subject id:
+- **Line 1** — the Subject record the command just acted on: `Subject: #<id> "<name>" (<subject_type>)`.
+- **Line 2** — the usual `context: workspace: ... | idea: ... | ...` row, with the `subject` field now showing the full row (id, name, subject_type, has_perspective, has_self — the same fields `model list` shows), not just the bare id.
+
+New helpers in `cmd/root.go`:
+- `printContextWithSubject(client *api.Client, subjectID string)` — prints both lines. Fetches `subjectID` once and reuses that fetch for line 2's `subject` field when it matches the active `ctx.Subject`, rather than fetching twice.
+- `subjectContextLabel(subjectID string) string` — used by plain `printContext()` (no acted-on Subject in scope) and by `printContextWithSubject` when the acted-on Subject differs from `ctx.Subject`. Fetched live, not cached, so a renamed Subject doesn't show stale data; falls back silently to the bare id if the fetch fails.
+- `printContextRow(ctx *config.Context, subjectLabel func(string) string)` — the shared field-list/join logic both `printContext()` and `printContextWithSubject` render through.
+
+Both skipped in `--json`/`--no-context` mode.
+
+Wired into every command that acts on a bare Subject id (replacing the earlier `printSubjectContext` pre-output call):
 - `model dispositions list/create/delete`
 - `model states list/create/delete`
 - `model perspective get`
@@ -20,22 +30,18 @@ Wired into every command that acts on a bare Subject id:
 - `model belief create` (only when `--subject` is passed)
 - `model add perspective`/`model add goal`
 
-`createGoalOnSubject`'s existing has_self:false confirmation check already fetches the Subject — that GET's response is reused to print the confirmation line rather than fetching twice; the `--yes`/skip-confirm path calls `printSubjectContext` separately since no GET happens otherwise.
+`createGoalOnSubject`'s has_self:false confirmation prompt still fetches the Subject and prints its own inline warning before the cascade — that's a distinct, necessary pre-action prompt, not the footer. The footer's `printContextWithSubject` call happens once at the end, after the Goal is created, regardless of whether confirmation ran.
 
-## Fix 3: Context footer shows the active Subject's full row
-
-Added at Shawn's request while reviewing the first two fixes: the shared context footer (`printContext()`, printed at the end of most commands) previously showed only the bare `ctx.Subject` id (`subject: 42`). It now fetches and shows the same row `model list` shows for a Subject — id, name, subject_type, has_perspective, has_self — via a new `subjectContextLabel(subjectID string) string` helper. Fetched live (not cached) each time the footer prints, so a Subject renamed elsewhere doesn't show stale data; falls back silently to the bare id if the fetch fails (no credentials, no server reachable, etc.) rather than breaking the command's primary output over a secondary lookup failing.
-
-This applies globally — any command that calls `printContext()` (not just `model` commands) will show the active Subject's full row once `model use` has been run, the same way `state`/`goal`/etc. already appear in the footer once set.
+This applies globally — any command that calls `printContext()` (not just `model` commands) shows the active Subject's full row in line 2 once `model use` has been run, the same way `state`/`goal`/etc. already appear once set.
 
 ## Out of scope
 
-No backend changes. No new confirmation prompts. No hard blocking of any id — every `model` command still accepts a bare Subject id and works on any subtype.
+No backend changes. No new confirmation prompts beyond the pre-existing has_self:false one. No hard blocking of any id — every `model` command still accepts a bare Subject id and works on any subtype. Names for the *other* context fields (idea, person, place, thing, state, goal) are out of scope for this ticket — only Subject gets the name lookup; expanding the rest is a separate, bigger change (each would need its own fetch).
 
 ## Implementation notes
 
 - `cmd/model.go`: `model list`'s fallback branch rewritten to call `/idea/` directly instead of delegating to `ideasListCmd.RunE`.
-- `cmd/root.go`: new `printSubjectContext` helper (per-command confirmation line) and `subjectContextLabel` helper (footer row), placed alongside `printContext`/`confirm`.
+- `cmd/root.go`: `printContextWithSubject`, `subjectContextLabel`, `printContextRow` — the earlier `printSubjectContext` (pre-output, per-command confirmation) was replaced entirely, not kept alongside.
 - Test file `cmd/model_subject_context_test.go` introduces `captureStdout` (an `os.Pipe`-based stdout capture helper) — a deliberate, minimal deviation from this suite's usual error-return-only assertion style, since this bug is specifically about output *text* being misleading, and the fix has to be verified by reading that text.
 
 Full ticket: https://momentsbyshawn.atlassian.net/browse/YOS-81
