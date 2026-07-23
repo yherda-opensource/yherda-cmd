@@ -131,6 +131,28 @@ func joinStrings(ss []string, sep string) string {
 	return result
 }
 
+// printSubjectContext fetches and prints a one-line confirmation of what a
+// Subject id actually resolves to — "Subject: #<id> <name> (<subject_type>)"
+// — before a command acts on it. Every model command taking a bare Subject
+// id (explicit arg or resolved from context) calls this so a wrong-context
+// id (e.g. an Idea id copied from 'model list's fallback output) is visible
+// immediately rather than silently accepted. Skipped in --json mode, since
+// a JSON caller already knows what it asked for and a text line would just
+// pollute the output; --json callers wanting this should read the id back
+// from 'model show' themselves. Not a confirmation prompt — no blocking,
+// just visibility, per insight_cli_capability_grant_confirmation_pattern.md.
+func printSubjectContext(client *api.Client, subjectID string) error {
+	if jsonOutput {
+		return nil
+	}
+	var subject map[string]any
+	if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
+		return err
+	}
+	fmt.Printf("Subject: #%s %q (%s)\n", subjectID, strField(subject, "name"), strField(subject, "subject_type"))
+	return nil
+}
+
 // confirmReader is the source for confirm() prompts. Overridden in tests.
 var confirmReader io.Reader = os.Stdin
 

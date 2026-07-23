@@ -24,6 +24,9 @@ var modelPerspectiveGetCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		var result map[string]any
 		if err := client.Post("/subject/"+args[0]+"/perspective/", nil, &result); err != nil {
 			return err

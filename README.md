@@ -140,6 +140,12 @@ Some commands confirm before a side effect bigger than the command name suggests
 
 `model dispositions contexts` (Disposition-Context attachment, reusing the same Perspective-Contexts mechanism since Disposition is itself a Subject) is not implemented yet — blocked on a backend gap (no Subject-generic `/api/subject/{id}/contexts/` endpoint exists today, tracked as GEN-574). Don't mistake its absence for an oversight.
 
+### Idea ids vs Subject ids
+
+These are separate id spaces on the backend and can collide numerically (Idea `5` and Subject `5` are unrelated records that happen to share a number) — see YOS-81. `model list` normally lists Subjects for an idea (`ID` column = Subject ids), but when it falls back to listing all Ideas (no active idea, no `<idea-id>` arg), the fallback table is deliberately shaped differently — header `IDEA ID` instead of `ID`, plus an explicit warning line — so it's obvious those ids don't work with `model show` or any other `model` command.
+
+Every `model` command that acts on a bare Subject id also prints a one-line confirmation of what that id actually resolves to (`Subject: #<id> "<name>" (<subject_type>)`) before acting, via the shared `printSubjectContext` helper in `cmd/root.go` — skipped in `--json` mode, since a JSON caller already knows what it asked for. This is visibility, not validation: no `model` command hard-blocks any Subject id or subtype, per the epic's no-type-gating principle — the goal is that a wrong-context id (e.g. one copied from `model list`'s idea-fallback table) is immediately visible, not silently accepted.
+
 ### Why there's no `model add identity`
 
 Two reasons, not one. First, a backend gap: Identity creation is hardcoded to `Person` server-side (`POST /api/person/{id}/identities/`), with no Subject-generic path — tracked as GEN-576. Second, and more durable even if GEN-576 ships: Perspective is the generic "this Subject can hold context/opinion" capability, cheap and universal on any Subject. Identity is specifically the character layer, and it only becomes load-bearing once a Subject needs a Goal — which already cascades Self → Identity → Perspective on its own via `model add goal`/`model goals create`. Nobody adds Identity to a chair that just needs an opinion; they give it a Perspective. A standalone "give this Subject an Identity" command may not be a real need at all — don't assume its absence is an oversight to fix.

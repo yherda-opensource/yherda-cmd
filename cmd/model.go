@@ -68,7 +68,24 @@ var modelListCmd = &cobra.Command{
 		}
 		if ideaID == "" {
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
-			return ideasListCmd.RunE(cmd, args)
+			fmt.Println("Note: the ids below are IDEA ids, not Subject ids — they are a different id space and will not work with 'model show' or other model commands.")
+			client := mustClient()
+			var ideas []map[string]any
+			if err := client.Get("/idea/", &ideas); err != nil {
+				return err
+			}
+			if jsonOutput {
+				printJSON(ideas)
+				return nil
+			}
+			w := newTabWriter()
+			fmt.Fprintln(w, "IDEA ID\tNAME\tABSTRACT")
+			for _, row := range ideas {
+				fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
+			}
+			w.Flush()
+			printContext()
+			return nil
 		}
 		path := "/idea/" + ideaID + "/subjects/"
 		q := url.Values{}
@@ -141,6 +158,9 @@ var modelDispositionsListCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		var result []map[string]any
 		if err := client.Get("/subject/"+args[0]+"/dispositions/", &result); err != nil {
 			return err
@@ -175,6 +195,9 @@ var modelDispositionsCreateCmd = &cobra.Command{
 			return fmt.Errorf("--name is required")
 		}
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		var result map[string]any
 		body := map[string]string{"type": modelDispositionType, "name": modelDispositionName}
 		if err := client.Post("/subject/"+args[0]+"/dispositions/", body, &result); err != nil {
@@ -195,6 +218,9 @@ var modelDispositionsDeleteCmd = &cobra.Command{
 			return fmt.Errorf("--disposition is required")
 		}
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		body := map[string]string{"disposition": modelDispositionDeleteID}
 		if err := client.Delete("/subject/"+args[0]+"/dispositions/", body); err != nil {
 			return err
@@ -221,6 +247,9 @@ var modelStatesListCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		var result []map[string]any
 		if err := client.Get("/subject/"+args[0]+"/states/", &result); err != nil {
 			return err
@@ -249,6 +278,9 @@ var modelStatesCreateCmd = &cobra.Command{
 			return fmt.Errorf("--name is required")
 		}
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		var result map[string]any
 		if err := client.Post("/subject/"+args[0]+"/states/", map[string]string{"name": modelStateName}, &result); err != nil {
 			return err
@@ -268,6 +300,9 @@ var modelStatesDeleteCmd = &cobra.Command{
 			return fmt.Errorf("--state is required")
 		}
 		client := mustClient()
+		if err := printSubjectContext(client, args[0]); err != nil {
+			return err
+		}
 		body := map[string]string{"state": modelStateDeleteID}
 		if err := client.Delete("/subject/"+args[0]+"/states/", body); err != nil {
 			return err

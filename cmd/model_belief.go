@@ -53,6 +53,11 @@ var modelBeliefCreateCmd = &cobra.Command{
 			body["subject"] = modelBeliefSubjectID
 		}
 		client := mustClient()
+		if modelBeliefSubjectID != "" {
+			if err := printSubjectContext(client, modelBeliefSubjectID); err != nil {
+				return err
+			}
+		}
 		var result map[string]any
 		if err := client.Post("/idea/"+ideaID+"/beliefs/", body, &result); err != nil {
 			return err
