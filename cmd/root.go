@@ -60,9 +60,10 @@ func init() {
 	rootCmd.AddCommand(dispositionCmd)
 	rootCmd.AddCommand(modelCmd)
 	rootCmd.AddCommand(workspaceListCmd)
-	rootCmd.AddCommand(formatCmd)
-	rootCmd.AddCommand(expressionCmd)
-	rootCmd.AddCommand(docsCmd)
+	// formatCmd, expressionCmd, and docsCmd are disabled — being replaced. See YOS-80.
+	// rootCmd.AddCommand(formatCmd)
+	// rootCmd.AddCommand(expressionCmd)
+	// rootCmd.AddCommand(docsCmd)
 }
 
 func printJSON(v any) {

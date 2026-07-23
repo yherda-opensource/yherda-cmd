@@ -1,5 +1,11 @@
 package cmd
 
+// format and expression commands are disabled — being replaced. See YOS-80.
+// These tests drive both via rootCmd, which now returns "unknown command"
+// since neither is registered; commented out rather than deleted so they can
+// be restored once the replacement lands.
+
+/*
 import (
 	"testing"
 
@@ -65,3 +71,4 @@ func TestExpressionList_ContextIdeaUsed_NoContextError(t *testing.T) {
 		t.Error("active_idea in config should have satisfied the requirement")
 	}
 }
+*/

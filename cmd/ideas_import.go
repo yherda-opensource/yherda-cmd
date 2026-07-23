@@ -61,5 +61,6 @@ func init() {
 	ideasImportCmd.Flags().StringVar(&ideasImportSource, "source", "", "Path to the source file or directory (required)")
 	ideasImportCmd.Flags().StringVar(&ideasImportIdeaID, "idea", "", "Idea ID (overrides active context)")
 	ideasImportCmd.Flags().BoolVar(&ideasImportDryRun, "dry-run", false, "Show what would be created without writing to the API")
-	ideasCmd.AddCommand(ideasImportCmd)
+	// ideas import is disabled — being replaced. See YOS-80.
+	// ideasCmd.AddCommand(ideasImportCmd)
 }

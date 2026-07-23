@@ -4,7 +4,17 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+)
 
+// docsCmd is disabled — being replaced. See YOS-80.
+// The rootCmd-driven tests below are commented out since docsCmd is no
+// longer registered and rootCmd.Execute() would return "unknown command"
+// instead of the specific errors these tests assert. TestReadContent_File
+// stays active since it calls the readContent helper directly, not through
+// rootCmd.
+
+/*
+import (
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -111,6 +121,7 @@ func TestDocsUpdate_MissingFile(t *testing.T) {
 		t.Fatal("expected error when --file path does not exist")
 	}
 }
+*/
 
 // TestReadContent_File verifies that readContent reads from a file when --file is provided.
 func TestReadContent_File(t *testing.T) {

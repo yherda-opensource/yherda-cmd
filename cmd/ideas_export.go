@@ -64,5 +64,6 @@ func init() {
 	ideasExportCmd.Flags().StringVar(&ideasExportFormat, "format", "", "Export format (required): "+strings.Join(structural.Formats(), ", "))
 	ideasExportCmd.Flags().StringVar(&ideasExportIdeaID, "idea", "", "Idea ID (overrides active context)")
 	ideasExportCmd.Flags().StringVar(&ideasExportOutput, "output", "", "Output path (default: ./obsidian-export/)")
-	ideasCmd.AddCommand(ideasExportCmd)
+	// ideas export is disabled — being replaced. See YOS-80.
+	// ideasCmd.AddCommand(ideasExportCmd)
 }
