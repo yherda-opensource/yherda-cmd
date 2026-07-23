@@ -55,6 +55,7 @@ func init() {
 	rootCmd.AddCommand(settingCmd)
 	rootCmd.AddCommand(thingCmd)
 	rootCmd.AddCommand(dispositionCmd)
+	rootCmd.AddCommand(modelCmd)
 	rootCmd.AddCommand(workspaceListCmd)
 	rootCmd.AddCommand(formatCmd)
 	rootCmd.AddCommand(expressionCmd)
@@ -99,6 +100,7 @@ func printContext() {
 		{"person", ctx.Person},
 		{"place", ctx.Place},
 		{"thing", ctx.Thing},
+		{"state", ctx.State},
 	}
 	var parts []string
 	for _, f := range fields {

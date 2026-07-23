@@ -36,6 +36,7 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/ideas_import.go` | `ideas import` — structural import of a source format into an idea's entity graph. |
 | `cmd/identity.go` | Identity (character) management. |
 | `cmd/person.go`, `cmd/place.go`, `cmd/setting.go`, `cmd/thing.go`, `cmd/disposition.go` | Person/place/thing entities and their settings and dispositions. |
+| `cmd/model.go` | The `model` command family — Subject-generic commands (`show`, `dispositions`, `states`, `states dispositions`) that operate on the platform's Subject base class by bare id, working the same way regardless of concrete subtype. Distinct from the per-type resource files above. |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
 | `cmd/format.go` | Expression format management. |
 | `cmd/expression.go` | Expression list/show/print/export — the segment-tree-to-output pipeline. |
@@ -124,6 +125,8 @@ Existing resource files (`cmd/person.go`, `cmd/place.go`, `cmd/thing.go`, etc.) 
 5. Register the new top-level command in `cmd/root.go`'s `init()`.
 
 Following this pattern keeps every resource consistent and means a new contributor (or an agent) can infer how an unfamiliar command works from any other one.
+
+Subject-generic commands (`cmd/model.go`) are the exception: they operate on a bare Subject id rather than a specific subtype, so they don't get their own `use`-and-cascade context slot unless a specific need is demonstrated — `model show`/`dispositions`/`states` all take an explicit id argument rather than falling back to an existing Person/Place/Thing context. `model states use` is the one exception, since a State's active-context value is meaningfully reused across `states dispositions` subcommands.
 
 ## Releasing
 
