@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
 // modelAddCmd is the CLI's expressive layer for exercising the platform's
@@ -24,20 +23,6 @@ var modelAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a capability to the active Subject",
 	Long:  "Adds a capability (Perspective, Goal) to the Subject set via 'model use', with an optional positional id override.",
-}
-
-func resolveSubjectID(args []string) (string, error) {
-	if len(args) > 0 {
-		return args[0], nil
-	}
-	ctx, err := config.LoadContext()
-	if err != nil {
-		return "", err
-	}
-	if ctx.Subject == "" {
-		return "", fmt.Errorf("no active subject — pass a subject id or run 'yherda model use <subject-id>'")
-	}
-	return ctx.Subject, nil
 }
 
 var modelAddPerspectiveCmd = &cobra.Command{

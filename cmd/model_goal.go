@@ -18,14 +18,20 @@ var modelGoalsCmd = &cobra.Command{
 }
 
 var modelGoalsListCmd = &cobra.Command{
-	Use:     "list <subject-id>",
-	Short:   "List Goals for a Subject",
-	Example: `  yherda model goals list 42`,
-	Args:    cobra.ExactArgs(1),
+	Use:   "list [<subject-id>]",
+	Short: "List Goals for a Subject",
+	Long:  "Lists Goals for a Subject. Uses the active subject unless a subject id is passed.",
+	Example: `  yherda model goals list
+  yherda model goals list 42`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		subjectID, err := resolveSubjectID(args)
+		if err != nil {
+			return err
+		}
 		client := mustClient()
 		var result []map[string]any
-		if err := client.Get("/subject/"+args[0]+"/goals/", &result); err != nil {
+		if err := client.Get("/subject/"+subjectID+"/goals/", &result); err != nil {
 			return err
 		}
 		if jsonOutput {
@@ -39,7 +45,7 @@ var modelGoalsListCmd = &cobra.Command{
 				strField(row, "id"), strField(row, "want"), strField(row, "need"), strField(row, "tragedy"))
 		}
 		w.Flush()
-		printContextWithSubject(client, args[0])
+		printContextWithSubject(client, subjectID)
 		return nil
 	},
 }
@@ -51,16 +57,20 @@ var modelGoalDescription string
 var modelGoalsCreateSkipConfirm bool
 
 var modelGoalsCreateCmd = &cobra.Command{
-	Use:   "create <subject-id>",
+	Use:   "create [<subject-id>]",
 	Short: "Create a Goal on a Subject",
 	Long: "Creates a Goal on a Subject. If the Subject has no Self yet, this also cascades a default Identity " +
 		"and that Identity's own Perspective/Disposition into existence — you'll be asked to confirm before that " +
-		"happens unless --yes is passed.",
-	Example: `  yherda model goals create 42 --want "To find her father"
+		"happens unless --yes is passed. Uses the active subject unless a subject id is passed.",
+	Example: `  yherda model goals create --want "To find her father"
   yherda model goals create 42 --want "To find her father" --need "To let go of guilt" --tragedy`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return createGoalOnSubject(args[0], modelGoalsCreateSkipConfirm)
+		subjectID, err := resolveSubjectID(args)
+		if err != nil {
+			return err
+		}
+		return createGoalOnSubject(subjectID, modelGoalsCreateSkipConfirm)
 	},
 }
 
