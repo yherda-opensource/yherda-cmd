@@ -59,42 +59,50 @@ var modelGoalsCreateCmd = &cobra.Command{
   yherda model goals create 42 --want "To find her father" --need "To let go of guilt" --tragedy`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if modelGoalWant == "" {
-			fmt.Println("Warning: --want is empty. A Goal without a want is technically valid but not very useful.")
-		}
-		if !modelGoalsCreateSkipConfirm {
-			client := mustClient()
-			var subject map[string]any
-			if err := client.Get("/subject/"+args[0]+"/", &subject); err != nil {
-				return err
-			}
-			hasSelf := subject["has_self"] == true
-			if !hasSelf {
-				name := strField(subject, "name")
-				subjectType := strField(subject, "subject_type")
-				prompt := fmt.Sprintf(
-					"Subject #%s %q (%s) has no Self yet — creating a Goal will also create its Self, a default Identity, and that Identity's own Perspective/Disposition. Continue? [y/N] ",
-					args[0], name, subjectType,
-				)
-				if !confirm(prompt) {
-					return fmt.Errorf("aborted")
-				}
-			}
-		}
-		body := map[string]any{
-			"want":        modelGoalWant,
-			"need":        modelGoalNeed,
-			"tragedy":     modelGoalTragedy,
-			"description": modelGoalDescription,
-		}
+		return createGoalOnSubject(args[0], modelGoalsCreateSkipConfirm)
+	},
+}
+
+// createGoalOnSubject creates a Goal on the given Subject, confirming first
+// (unless skipConfirm) when the Subject has no Self yet — shared by
+// 'model goals create <subject-id>' and 'model add goal [<subject-id>]',
+// which differ only in how they resolve the target Subject id.
+func createGoalOnSubject(subjectID string, skipConfirm bool) error {
+	if modelGoalWant == "" {
+		fmt.Println("Warning: --want is empty. A Goal without a want is technically valid but not very useful.")
+	}
+	if !skipConfirm {
 		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/subject/"+args[0]+"/goals/", body, &result); err != nil {
+		var subject map[string]any
+		if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
 			return err
 		}
-		printJSON(result)
-		return nil
-	},
+		hasSelf := subject["has_self"] == true
+		if !hasSelf {
+			name := strField(subject, "name")
+			subjectType := strField(subject, "subject_type")
+			prompt := fmt.Sprintf(
+				"Subject #%s %q (%s) has no Self yet — creating a Goal will also create its Self, a default Identity, and that Identity's own Perspective/Disposition. Continue? [y/N] ",
+				subjectID, name, subjectType,
+			)
+			if !confirm(prompt) {
+				return fmt.Errorf("aborted")
+			}
+		}
+	}
+	body := map[string]any{
+		"want":        modelGoalWant,
+		"need":        modelGoalNeed,
+		"tragedy":     modelGoalTragedy,
+		"description": modelGoalDescription,
+	}
+	client := mustClient()
+	var result map[string]any
+	if err := client.Post("/subject/"+subjectID+"/goals/", body, &result); err != nil {
+		return err
+	}
+	printJSON(result)
+	return nil
 }
 
 // modelGoalCmd is the singular 'goal' command, distinct from the plural
