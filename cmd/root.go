@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -101,6 +104,7 @@ func printContext() {
 		{"place", ctx.Place},
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
+		{"goal", ctx.Goal},
 	}
 	var parts []string
 	for _, f := range fields {
@@ -123,6 +127,21 @@ func joinStrings(ss []string, sep string) string {
 		result += s
 	}
 	return result
+}
+
+// confirmReader is the source for confirm() prompts. Overridden in tests.
+var confirmReader io.Reader = os.Stdin
+
+// confirm prints a y/N prompt and reports whether the user answered yes.
+// Only "y" or "yes" (case-insensitive) count as confirmation.
+func confirm(prompt string) bool {
+	fmt.Print(prompt)
+	scanner := bufio.NewScanner(confirmReader)
+	if !scanner.Scan() {
+		return false
+	}
+	answer := strings.ToLower(strings.TrimSpace(scanner.Text()))
+	return answer == "y" || answer == "yes"
 }
 
 // useParent persists a parent id to the working directory context when it was

@@ -35,6 +35,7 @@ func TestSaveAndLoadContext(t *testing.T) {
 		Place:     "place-1",
 		Thing:     "thing-1",
 		State:     "state-1",
+		Goal:      "goal-1",
 	}
 	if err := SaveContext(ctx); err != nil {
 		t.Fatalf("SaveContext: %v", err)
@@ -64,6 +65,9 @@ func TestSaveAndLoadContext(t *testing.T) {
 	if loaded.State != ctx.State {
 		t.Errorf("active_state: got %q, want %q", loaded.State, ctx.State)
 	}
+	if loaded.Goal != ctx.Goal {
+		t.Errorf("active_goal: got %q, want %q", loaded.Goal, ctx.Goal)
+	}
 }
 
 func TestSaveContext_StateOmittedWhenUnset(t *testing.T) {
@@ -78,6 +82,9 @@ func TestSaveContext_StateOmittedWhenUnset(t *testing.T) {
 	}
 	if loaded.State != "" {
 		t.Errorf("active_state should be empty when unset, got %q", loaded.State)
+	}
+	if loaded.Goal != "" {
+		t.Errorf("active_goal should be empty when unset, got %q", loaded.Goal)
 	}
 }
 

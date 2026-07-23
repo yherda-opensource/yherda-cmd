@@ -39,6 +39,7 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/model.go` | The `model` command family — Subject-generic commands (`show`, `dispositions`, `states`, `states dispositions`) that operate on the platform's Subject base class by bare id, working the same way regardless of concrete subtype. Distinct from the per-type resource files above. |
 | `cmd/model_perspective.go` | `model perspective` — get/materialize a Subject's Perspective and manage the Contexts attached to it (`ContextPerspective`). |
 | `cmd/model_belief.go` | `model belief` — create a Belief (idea-scoped root create) and manage its attachment to Contexts (`BeliefContext`). |
+| `cmd/model_goal.go` | `model goals`, `model goal use`, `model steps` — Goal/Step CRUD on a Subject, plus the active-goal context slot. |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
 | `cmd/format.go` | Expression format management. |
 | `cmd/expression.go` | Expression list/show/print/export — the segment-tree-to-output pipeline. |
@@ -128,7 +129,9 @@ Existing resource files (`cmd/person.go`, `cmd/place.go`, `cmd/thing.go`, etc.) 
 
 Following this pattern keeps every resource consistent and means a new contributor (or an agent) can infer how an unfamiliar command works from any other one.
 
-Subject-generic commands (`cmd/model.go`) are the exception: they operate on a bare Subject id rather than a specific subtype, so they don't get their own `use`-and-cascade context slot unless a specific need is demonstrated — `model show`/`dispositions`/`states` all take an explicit id argument rather than falling back to an existing Person/Place/Thing context. `model states use` is the one exception, since a State's active-context value is meaningfully reused across `states dispositions` subcommands.
+Subject-generic commands (`cmd/model.go`) are the exception: they operate on a bare Subject id rather than a specific subtype, so they don't get their own `use`-and-cascade context slot unless a specific need is demonstrated — `model show`/`dispositions`/`states` all take an explicit id argument rather than falling back to an existing Person/Place/Thing context. `model states use` and `model goal use` are the exceptions, since their active-context values are meaningfully reused across `states dispositions` and `steps` subcommands respectively. Neither clears Person/Place/Thing/State — a State or Goal is scoped to whichever Subject already has it, not a replacement for the active Person/Place/Thing, so clearing them on `use` would lose context unnecessarily.
+
+Some commands confirm before a side effect bigger than the command name suggests — `model goals create` prompts before creating a Goal on a Subject with no existing Self, since that cascades a default Identity and its own Perspective/Disposition into existence too. Pass `--yes`/`-y` to skip the prompt (e.g. from a script). See insight_cli_capability_grant_confirmation_pattern.md for when this pattern should be reached for elsewhere in the CLI: case-by-case, only where a command's blast radius isn't obvious from its name.
 
 ### Belief-attachment specificity
 
