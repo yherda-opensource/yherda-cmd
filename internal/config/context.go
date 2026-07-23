@@ -13,6 +13,7 @@ type Context struct {
 	Place     string `json:"active_place,omitempty"`
 	Thing     string `json:"active_thing,omitempty"`
 	State     string `json:"active_state,omitempty"`
+	Goal      string `json:"active_goal,omitempty"`
 }
 
 const contextFile = ".yherda"
