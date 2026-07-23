@@ -15,17 +15,22 @@ var modelPerspectiveCmd = &cobra.Command{
 }
 
 var modelPerspectiveGetCmd = &cobra.Command{
-	Use:   "get <subject-id>",
+	Use:   "get [<subject-id>]",
 	Short: "Get (or lazily materialize) a Subject's Perspective",
 	Long: "Gets a Subject's Perspective, materializing it on first call. This is a POST under the hood " +
 		"despite being a 'get' from the CLI's perspective — the server's get_or_create is idempotent, " +
-		"so repeated calls return the same Perspective.",
-	Example: `  yherda model perspective get 42`,
-	Args:    cobra.ExactArgs(1),
+		"so repeated calls return the same Perspective. Uses the active subject unless a subject id is passed.",
+	Example: `  yherda model perspective get
+  yherda model perspective get 42`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		subjectID, err := resolveSubjectID(args)
+		if err != nil {
+			return err
+		}
 		client := mustClient()
 		var result map[string]any
-		if err := client.Post("/subject/"+args[0]+"/perspective/", nil, &result); err != nil {
+		if err := client.Post("/subject/"+subjectID+"/perspective/", nil, &result); err != nil {
 			return err
 		}
 		if jsonOutput {
@@ -37,7 +42,7 @@ var modelPerspectiveGetCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
 		}
 		w.Flush()
-		printContextWithSubject(client, args[0])
+		printContextWithSubject(client, subjectID)
 		return nil
 	},
 }

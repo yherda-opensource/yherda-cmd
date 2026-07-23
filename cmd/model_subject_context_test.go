@@ -168,3 +168,134 @@ func TestPrintContextWithSubject_DoesNotPanic(t *testing.T) {
 		printContextWithSubject(mustClient(), "42")
 	})
 }
+
+// --- resolveSubjectID fallback (YOS-82) ---
+// model use should be the default fallback for every bare-Subject-id command.
+// resolveSubjectID: explicit arg wins, else falls back to ctx.Subject, else a
+// clear error — same shape as resolveGoalID/resolveStateID.
+
+func TestResolveSubjectID_ExplicitArg_WinsOverContext(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", Subject: "99"})
+
+	got, err := resolveSubjectID([]string{"42"})
+	if err != nil {
+		t.Fatalf("resolveSubjectID: %v", err)
+	}
+	if got != "42" {
+		t.Errorf("resolveSubjectID with explicit arg = %q, want %q (should not fall back to ctx.Subject)", got, "42")
+	}
+}
+
+func TestResolveSubjectID_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws", Subject: "99"})
+
+	got, err := resolveSubjectID(nil)
+	if err != nil {
+		t.Fatalf("resolveSubjectID: %v", err)
+	}
+	if got != "99" {
+		t.Errorf("resolveSubjectID with no arg = %q, want ctx.Subject %q", got, "99")
+	}
+}
+
+func TestResolveSubjectID_NoArgNoContext_ReturnsClearError(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws"})
+
+	_, err := resolveSubjectID(nil)
+	if err == nil {
+		t.Fatal("expected an error when no arg and no active subject")
+	}
+	if !bytes.Contains([]byte(err.Error()), []byte("model use")) {
+		t.Errorf("error should point the user at 'model use <subject-id>', got: %q", err.Error())
+	}
+}
+
+// Command-level smoke tests: each formerly-required-id command still accepts
+// no positional arg and reaches the fallback (rather than failing cobra's
+// Args validation), for every command YOS-82 converted from ExactArgs(1) to
+// MaximumNArgs(1). No live server in tests, so each errors on the API call —
+// the point is it gets past arg parsing and into resolveSubjectID/the request.
+
+func TestModelShow_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	rootCmd.SetArgs([]string{"model", "show"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected an error against the fake test server")
+	}
+	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
+	}
+}
+
+func TestModelShow_NoArgNoContext_ReturnsFallbackError(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+
+	rootCmd.SetArgs([]string{"model", "show"})
+	err := rootCmd.Execute()
+	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("expected 'no active subject' error, got: %v", err)
+	}
+}
+
+func TestModelDispositionsList_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	rootCmd.SetArgs([]string{"model", "dispositions", "list"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected an error against the fake test server")
+	}
+	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
+	}
+}
+
+func TestModelStatesList_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	rootCmd.SetArgs([]string{"model", "states", "list"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected an error against the fake test server")
+	}
+	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
+	}
+}
+
+func TestModelPerspectiveGet_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	rootCmd.SetArgs([]string{"model", "perspective", "get"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected an error against the fake test server")
+	}
+	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
+	}
+}
+
+func TestModelGoalsList_NoArg_FallsBackToContext(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Subject: "42"})
+
+	rootCmd.SetArgs([]string{"model", "goals", "list"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected an error against the fake test server")
+	}
+	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
+		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
+	}
+}
