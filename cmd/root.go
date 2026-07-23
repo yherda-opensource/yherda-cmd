@@ -114,7 +114,7 @@ func printContextRow(ctx *config.Context, subjectLabel func(string) string) {
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
-		{"subject", subjectLabel(ctx.Subject)},
+		{"subject", subjectLabel(ctx.Subject())},
 	}
 	var parts []string
 	for _, f := range fields {
