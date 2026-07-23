@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
 )
 
@@ -162,6 +161,19 @@ func (c *Client) Patch(path string, body any, out any) error {
 	}
 	if out != nil {
 		return json.NewDecoder(resp.Body).Decode(out)
+	}
+	return nil
+}
+
+func (c *Client) Delete(path string, body any) error {
+	resp, err := c.do("DELETE", path, body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		data, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API error %d: %s", resp.StatusCode, string(data))
 	}
 	return nil
 }
