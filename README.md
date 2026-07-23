@@ -37,6 +37,8 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/identity.go` | Identity (character) management. |
 | `cmd/person.go`, `cmd/place.go`, `cmd/setting.go`, `cmd/thing.go`, `cmd/disposition.go` | Person/place/thing entities and their settings and dispositions. |
 | `cmd/model.go` | The `model` command family — Subject-generic commands (`show`, `dispositions`, `states`, `states dispositions`) that operate on the platform's Subject base class by bare id, working the same way regardless of concrete subtype. Distinct from the per-type resource files above. |
+| `cmd/model_perspective.go` | `model perspective` — get/materialize a Subject's Perspective and manage the Contexts attached to it (`ContextPerspective`). |
+| `cmd/model_belief.go` | `model belief` — create a Belief (idea-scoped root create) and manage its attachment to Contexts (`BeliefContext`). |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
 | `cmd/format.go` | Expression format management. |
 | `cmd/expression.go` | Expression list/show/print/export — the segment-tree-to-output pipeline. |
@@ -127,6 +129,12 @@ Existing resource files (`cmd/person.go`, `cmd/place.go`, `cmd/thing.go`, etc.) 
 Following this pattern keeps every resource consistent and means a new contributor (or an agent) can infer how an unfamiliar command works from any other one.
 
 Subject-generic commands (`cmd/model.go`) are the exception: they operate on a bare Subject id rather than a specific subtype, so they don't get their own `use`-and-cascade context slot unless a specific need is demonstrated — `model show`/`dispositions`/`states` all take an explicit id argument rather than falling back to an existing Person/Place/Thing context. `model states use` is the one exception, since a State's active-context value is meaningfully reused across `states dispositions` subcommands.
+
+### Belief-attachment specificity
+
+`model belief create` and `model perspective contexts add` don't enforce this — it's a convention for whoever is typing the command: an unqualified belief ("the king is not to be trusted") generally attaches at a Subject's own (or base) Perspective, while a fully-qualified one ("X, in identity Y, when Z") attaches at that specific Identity/Disposition's own Perspective instead.
+
+`model dispositions contexts` (Disposition-Context attachment, reusing the same Perspective-Contexts mechanism since Disposition is itself a Subject) is not implemented yet — blocked on a backend gap (no Subject-generic `/api/subject/{id}/contexts/` endpoint exists today, tracked as GEN-574). Don't mistake its absence for an oversight.
 
 ## Releasing
 
