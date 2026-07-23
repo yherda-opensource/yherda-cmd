@@ -105,6 +105,7 @@ func printContext() {
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
+		{"subject", ctx.Subject},
 	}
 	var parts []string
 	for _, f := range fields {

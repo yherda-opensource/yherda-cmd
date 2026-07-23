@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 	"github.com/yherda-opensource/yherda-cmd/internal/config"
@@ -37,6 +38,87 @@ var modelShowCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
 		}
 		w.Flush()
+		return nil
+	},
+}
+
+var modelListIdeaID string
+var modelListType string
+var modelListSearch string
+
+var modelListCmd = &cobra.Command{
+	Use:   "list [<idea-id>]",
+	Short: "List Subjects for an idea",
+	Long:  "Lists every Subject belonging to an idea, regardless of concrete subtype. Uses the active idea unless <idea-id> is passed.",
+	Example: `  yherda model list
+  yherda model list 42
+  yherda model list 42 --type Belief --search "king"`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ideaID := ""
+		if len(args) > 0 {
+			ideaID = args[0]
+		}
+		if ideaID == "" {
+			ctx, err := config.LoadContext()
+			if err != nil {
+				return err
+			}
+			ideaID = ctx.Idea
+		}
+		if ideaID == "" {
+			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
+			return ideasListCmd.RunE(cmd, args)
+		}
+		path := "/idea/" + ideaID + "/subjects/"
+		q := url.Values{}
+		if modelListType != "" {
+			q.Set("subject_type", modelListType)
+		}
+		if modelListSearch != "" {
+			q.Set("search", modelListSearch)
+		}
+		if len(q) > 0 {
+			path += "?" + q.Encode()
+		}
+		client := mustClient()
+		var result []map[string]any
+		if err := client.Get(path, &result); err != nil {
+			return err
+		}
+		if jsonOutput {
+			printJSON(result)
+			return nil
+		}
+		w := newTabWriter()
+		fmt.Fprintln(w, "ID\tNAME\tTYPE\tHAS PERSPECTIVE\tHAS SELF")
+		for _, row := range result {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				strField(row, "id"), strField(row, "name"), strField(row, "subject_type"),
+				strField(row, "has_perspective"), strField(row, "has_self"))
+		}
+		w.Flush()
+		return nil
+	},
+}
+
+var modelUseCmd = &cobra.Command{
+	Use:   "use <subject-id>",
+	Short: "Set the active Subject",
+	Long: "Sets the active Subject in context. Does not clear active person/place/thing/state/goal — the active " +
+		"Subject is orthogonal to those, not a replacement for any of them.",
+	Example: `  yherda model use 42`,
+	Args:    cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, err := config.LoadContext()
+		if err != nil {
+			return err
+		}
+		ctx.Subject = args[0]
+		if err := config.SaveContext(ctx); err != nil {
+			return err
+		}
+		fmt.Printf("Active subject set to %s\n", args[0])
 		return nil
 	},
 }
@@ -314,6 +396,9 @@ var modelStatesDispositionsUnsetCmd = &cobra.Command{
 }
 
 func init() {
+	modelListCmd.Flags().StringVar(&modelListType, "type", "", "Filter by subject_type (optional)")
+	modelListCmd.Flags().StringVar(&modelListSearch, "search", "", "Case-insensitive substring match on name (optional)")
+
 	modelDispositionsCreateCmd.Flags().StringVar(&modelDispositionType, "type", "", "Disposition type: physical, emotional, mental, spiritual (required)")
 	modelDispositionsCreateCmd.Flags().StringVar(&modelDispositionName, "name", "", "Name of the disposition (required)")
 	modelDispositionsDeleteCmd.Flags().StringVar(&modelDispositionDeleteID, "disposition", "", "Disposition ID to delete (required)")
@@ -324,5 +409,5 @@ func init() {
 	modelStatesDispositionsCmd.AddCommand(modelStatesDispositionsListCmd, modelStatesDispositionsSetCmd, modelStatesDispositionsUnsetCmd)
 	modelStatesCmd.AddCommand(modelStatesListCmd, modelStatesCreateCmd, modelStatesDeleteCmd, modelStatesUseCmd, modelStatesDispositionsCmd)
 
-	modelCmd.AddCommand(modelShowCmd, modelDispositionsCmd, modelStatesCmd)
+	modelCmd.AddCommand(modelShowCmd, modelListCmd, modelUseCmd, modelDispositionsCmd, modelStatesCmd)
 }

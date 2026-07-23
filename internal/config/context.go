@@ -14,6 +14,7 @@ type Context struct {
 	Thing     string `json:"active_thing,omitempty"`
 	State     string `json:"active_state,omitempty"`
 	Goal      string `json:"active_goal,omitempty"`
+	Subject   string `json:"active_subject,omitempty"`
 }
 
 const contextFile = ".yherda"
