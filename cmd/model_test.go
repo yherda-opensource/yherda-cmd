@@ -29,6 +29,102 @@ func TestModelShow_MissingID_Error(t *testing.T) {
 	}
 }
 
+// --- model list ---
+
+func TestModelList_NoIdeaContext_FallsBackToIdeaList(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+
+	rootCmd.SetArgs([]string{"model", "list"})
+	err := rootCmd.Execute()
+	if err != nil && err.Error() == "no active idea — run: yherda ideas use <id>" {
+		t.Error("should fall back to listing ideas rather than returning a hard error")
+	}
+}
+
+func TestModelList_ExplicitIdeaID_ReachesAPI(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
+
+	rootCmd.SetArgs([]string{"model", "list", "some-idea"})
+	err := rootCmd.Execute()
+	if err != nil && err.Error() == "not logged in — run 'yherda login' first" {
+		t.Errorf("credentials should have satisfied login requirement: %v", err)
+	}
+}
+
+func TestModelList_ContextIdea_ReachesAPI(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
+
+	rootCmd.SetArgs([]string{"model", "list"})
+	err := rootCmd.Execute()
+	if err != nil && err.Error() == "not logged in — run 'yherda login' first" {
+		t.Errorf("active idea in context should have satisfied the requirement: %v", err)
+	}
+}
+
+func TestModelList_WithTypeAndSearchFlags_ReachesAPI(t *testing.T) {
+	withTempHome(t)
+	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Idea: "idea-1"})
+
+	rootCmd.SetArgs([]string{"model", "list", "--type", "Belief", "--search", "king"})
+	err := rootCmd.Execute()
+	if err != nil && err.Error() == "not logged in — run 'yherda login' first" {
+		t.Errorf("flags should not interfere with the request: %v", err)
+	}
+}
+
+// --- model use ---
+
+func TestModelUse_SetsSubjectOnly_DoesNotClearPersonPlaceThingStateGoal(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{
+		Workspace: "ws",
+		Idea:      "idea-1",
+		Person:    "person-1",
+		Place:     "place-1",
+		Thing:     "thing-1",
+		State:     "state-1",
+		Goal:      "goal-1",
+	})
+
+	rootCmd.SetArgs([]string{"model", "use", "subject-1"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	loaded, _ := config.LoadContext()
+	if loaded.Subject != "subject-1" {
+		t.Errorf("active_subject: got %q, want %q", loaded.Subject, "subject-1")
+	}
+	if loaded.Person != "person-1" {
+		t.Errorf("active_person should be unchanged, got %q", loaded.Person)
+	}
+	if loaded.Place != "place-1" {
+		t.Errorf("active_place should be unchanged, got %q", loaded.Place)
+	}
+	if loaded.Thing != "thing-1" {
+		t.Errorf("active_thing should be unchanged, got %q", loaded.Thing)
+	}
+	if loaded.State != "state-1" {
+		t.Errorf("active_state should be unchanged, got %q", loaded.State)
+	}
+	if loaded.Goal != "goal-1" {
+		t.Errorf("active_goal should be unchanged, got %q", loaded.Goal)
+	}
+}
+
+func TestModelUse_MissingID_Error(t *testing.T) {
+	withTempHome(t)
+	saveContext(t, &config.Context{Workspace: "ws"})
+
+	rootCmd.SetArgs([]string{"model", "use"})
+	if err := rootCmd.Execute(); err == nil {
+		t.Fatal("expected error when subject id arg is missing")
+	}
+}
+
 // --- model dispositions create ---
 
 func TestModelDispositionsCreate_MissingType_Error(t *testing.T) {
