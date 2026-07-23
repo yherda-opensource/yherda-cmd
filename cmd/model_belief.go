@@ -58,6 +58,9 @@ var modelBeliefCreateCmd = &cobra.Command{
 			return err
 		}
 		printJSON(result)
+		if modelBeliefSubjectID != "" {
+			printContextWithSubject(client, modelBeliefSubjectID)
+		}
 		return nil
 	},
 }

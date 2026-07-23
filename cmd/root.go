@@ -98,6 +98,14 @@ func printContext() {
 	if err != nil {
 		return
 	}
+	printContextRow(ctx, subjectContextLabel)
+}
+
+// printContextRow prints the context summary line, given a function to
+// render the Subject field's label (so callers that already fetched the
+// Subject once — printContextWithSubject — can reuse that fetch instead of
+// calling subjectContextLabel and fetching it again).
+func printContextRow(ctx *config.Context, subjectLabel func(string) string) {
 	fields := []struct{ label, value string }{
 		{"workspace", ctx.Workspace},
 		{"idea", ctx.Idea},
@@ -106,7 +114,7 @@ func printContext() {
 		{"thing", ctx.Thing},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
-		{"subject", ctx.Subject},
+		{"subject", subjectLabel(ctx.Subject)},
 	}
 	var parts []string
 	for _, f := range fields {
@@ -120,6 +128,40 @@ func printContext() {
 	}
 }
 
+// subjectContextLabel renders the active Subject's full row for the context
+// footer — the same fields 'model list' shows (id, name, subject_type,
+// has_perspective, has_self) — not just the bare id, since a bare id alone
+// doesn't tell the user what they're actually pointed at (see YOS-81).
+// Fetched live rather than cached, so a Subject renamed elsewhere doesn't
+// show stale data in the footer. Falls back to the bare id if the fetch
+// fails, since a secondary lookup failing shouldn't break the command's
+// primary output.
+func subjectContextLabel(subjectID string) string {
+	if subjectID == "" {
+		return ""
+	}
+	creds, err := config.LoadCredentials()
+	if err != nil || creds == nil {
+		return subjectID
+	}
+	loadedCtx, err := config.LoadContext()
+	if err != nil || loadedCtx.Workspace == "" || loadedCtx.APIServer == "" {
+		return subjectID
+	}
+	client := api.New(loadedCtx.APIServer, creds)
+	var subject map[string]any
+	if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
+		return subjectID
+	}
+	name := strField(subject, "name")
+	subjectType := strField(subject, "subject_type")
+	if name == "" && subjectType == "" {
+		return subjectID
+	}
+	return fmt.Sprintf("%s %q (%s, has_perspective: %s, has_self: %s)",
+		subjectID, name, subjectType, strField(subject, "has_perspective"), strField(subject, "has_self"))
+}
+
 func joinStrings(ss []string, sep string) string {
 	result := ""
 	for i, s := range ss {
@@ -129,6 +171,44 @@ func joinStrings(ss []string, sep string) string {
 		result += s
 	}
 	return result
+}
+
+// printContextWithSubject prints the two-line footer: the record a command
+// just acted on (the Subject, resolved to its name/subject_type) as line 1,
+// then the usual context row as line 2. Every model command taking a bare
+// Subject id calls this after its own output instead of calling
+// printContext() directly, so a wrong-context id (e.g. an Idea id copied
+// from 'model list's fallback output) is visible immediately rather than
+// silently accepted — not a confirmation prompt, no blocking, just
+// visibility, per insight_cli_capability_grant_confirmation_pattern.md.
+// Skipped in --json mode, since a JSON caller already knows what it asked
+// for. Fetches subjectID once and reuses that row for the context row too
+// when it matches the active ctx.Subject, rather than fetching it twice.
+func printContextWithSubject(client *api.Client, subjectID string) {
+	if noContext || jsonOutput {
+		return
+	}
+	label := subjectID
+	var subject map[string]any
+	if err := client.Get("/subject/"+subjectID+"/", &subject); err == nil {
+		name := strField(subject, "name")
+		subjectType := strField(subject, "subject_type")
+		fmt.Printf("Subject: #%s %q (%s)\n", subjectID, name, subjectType)
+		if name != "" || subjectType != "" {
+			label = fmt.Sprintf("%s %q (%s, has_perspective: %s, has_self: %s)",
+				subjectID, name, subjectType, strField(subject, "has_perspective"), strField(subject, "has_self"))
+		}
+	}
+	ctx, err := config.LoadContext()
+	if err != nil {
+		return
+	}
+	printContextRow(ctx, func(activeSubjectID string) string {
+		if activeSubjectID == subjectID {
+			return label
+		}
+		return subjectContextLabel(activeSubjectID)
+	})
 }
 
 // confirmReader is the source for confirm() prompts. Overridden in tests.

@@ -68,7 +68,24 @@ var modelListCmd = &cobra.Command{
 		}
 		if ideaID == "" {
 			fmt.Println("No active idea — showing ideas instead. Run 'yherda ideas use <id>' to select one.")
-			return ideasListCmd.RunE(cmd, args)
+			fmt.Println("Note: the ids below are IDEA ids, not Subject ids — they are a different id space and will not work with 'model show' or other model commands.")
+			client := mustClient()
+			var ideas []map[string]any
+			if err := client.Get("/idea/", &ideas); err != nil {
+				return err
+			}
+			if jsonOutput {
+				printJSON(ideas)
+				return nil
+			}
+			w := newTabWriter()
+			fmt.Fprintln(w, "IDEA ID\tNAME\tABSTRACT")
+			for _, row := range ideas {
+				fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "name"), strField(row, "abstract"))
+			}
+			w.Flush()
+			printContext()
+			return nil
 		}
 		path := "/idea/" + ideaID + "/subjects/"
 		q := url.Values{}
@@ -155,6 +172,7 @@ var modelDispositionsListCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\t%s\n", strField(row, "id"), strField(row, "type"), strField(row, "name"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -181,6 +199,7 @@ var modelDispositionsCreateCmd = &cobra.Command{
 			return err
 		}
 		printJSON(result)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -200,6 +219,7 @@ var modelDispositionsDeleteCmd = &cobra.Command{
 			return err
 		}
 		fmt.Printf("Disposition %s deleted\n", modelDispositionDeleteID)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -235,6 +255,7 @@ var modelStatesListCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -254,6 +275,7 @@ var modelStatesCreateCmd = &cobra.Command{
 			return err
 		}
 		printJSON(result)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -273,6 +295,7 @@ var modelStatesDeleteCmd = &cobra.Command{
 			return err
 		}
 		fmt.Printf("State %s deleted\n", modelStateDeleteID)
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }

@@ -39,6 +39,7 @@ var modelGoalsListCmd = &cobra.Command{
 				strField(row, "id"), strField(row, "want"), strField(row, "need"), strField(row, "tragedy"))
 		}
 		w.Flush()
+		printContextWithSubject(client, args[0])
 		return nil
 	},
 }
@@ -71,8 +72,8 @@ func createGoalOnSubject(subjectID string, skipConfirm bool) error {
 	if modelGoalWant == "" {
 		fmt.Println("Warning: --want is empty. A Goal without a want is technically valid but not very useful.")
 	}
+	client := mustClient()
 	if !skipConfirm {
-		client := mustClient()
 		var subject map[string]any
 		if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
 			return err
@@ -96,12 +97,12 @@ func createGoalOnSubject(subjectID string, skipConfirm bool) error {
 		"tragedy":     modelGoalTragedy,
 		"description": modelGoalDescription,
 	}
-	client := mustClient()
 	var result map[string]any
 	if err := client.Post("/subject/"+subjectID+"/goals/", body, &result); err != nil {
 		return err
 	}
 	printJSON(result)
+	printContextWithSubject(client, subjectID)
 	return nil
 }
 

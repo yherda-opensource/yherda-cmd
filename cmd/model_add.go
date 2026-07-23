@@ -67,6 +67,7 @@ var modelAddPerspectiveCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", key, strField(result, key))
 		}
 		w.Flush()
+		printContextWithSubject(client, subjectID)
 		return nil
 	},
 }
