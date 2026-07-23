@@ -32,8 +32,8 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/auth.go` | `login` / `logout`. |
 | `cmd/workspace.go`, `cmd/workspacelist.go` | Active workspace selection and listing. |
 | `cmd/ideas.go` | Idea CRUD + setting the active idea. |
-| `cmd/ideas_export.go` | `ideas export` — structural export of an idea's entity graph. |
-| `cmd/ideas_import.go` | `ideas import` — structural import of a source format into an idea's entity graph. |
+| `cmd/ideas_export.go` | `ideas export` — structural export of an idea's entity graph. **Disabled** — being replaced, see YOS-80. |
+| `cmd/ideas_import.go` | `ideas import` — structural import of a source format into an idea's entity graph. **Disabled** — being replaced, see YOS-80. |
 | `cmd/identity.go` | Identity (character) management. |
 | `cmd/person.go`, `cmd/place.go`, `cmd/setting.go`, `cmd/thing.go`, `cmd/disposition.go` | Person/place/thing entities and their settings and dispositions. |
 | `cmd/model.go` | The `model` command family — Subject-generic commands (`show`, `dispositions`, `states`, `states dispositions`) that operate on the platform's Subject base class by bare id, working the same way regardless of concrete subtype. Distinct from the per-type resource files above. |
@@ -42,9 +42,9 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/model_goal.go` | `model goals`, `model goal use`, `model steps` — Goal/Step CRUD on a Subject, plus the active-goal context slot. |
 | `cmd/model_add.go` | `model add perspective`/`model add goal` — the first commands that consume `ctx.Subject` (set by `model use`): add a capability to the active Subject, with an optional positional id override. |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
-| `cmd/format.go` | Expression format management. |
-| `cmd/expression.go` | Expression list/show/print/export — the segment-tree-to-output pipeline. |
-| `cmd/docs.go` | Idea *documents* (freeform notes attached to an idea) — unrelated to this README despite the name. |
+| `cmd/format.go` | Expression format management. **Disabled** — being replaced, see YOS-80. |
+| `cmd/expression.go` | Expression list/show/print/export — the segment-tree-to-output pipeline. **Disabled** — being replaced, see YOS-80. |
+| `cmd/docs.go` | Idea *documents* (freeform notes attached to an idea) — unrelated to this README despite the name. **Disabled** — being replaced, see YOS-80. |
 | `internal/api/client.go` | Thin HTTP client (`Get`/`Post`/`Patch`) with bearer-token auth and one automatic refresh-and-retry on 401. |
 | `internal/auth/` | OAuth2 PKCE login flow (`pkce.go`) and the local browser launch (`browser.go`). |
 | `internal/config/` | Local persistence: `config.go` for credentials (`~/.yherdacmd/credentials.json`), `context.go` for per-directory active context (`.yherda` file). |
