@@ -65,12 +65,13 @@ Run `go mod tidy` after adding any new import.
 |---|---|
 | `YHERDA_PUBLIC_HOST` | Overrides the public (no-workspace) API host used during login (`internal/auth/pkce.go`) and by `mustPublicClient()`. Defaults to `https://public.a.yherda.com`. |
 | `YHERDA_INSECURE=1` | Skips TLS certificate verification on the HTTP client. Development only — never set this against a real deployment. |
+| `YHERDA_SANDBOX=1` | Scopes credentials to a hidden `.yherdacmd/` directory in the current working directory instead of `~/.yherdacmd/`. Lets different project directories hold independent logins — e.g. a `local/.envrc` and `prod/.envrc` pair, each pointing at a different `YHERDA_PUBLIC_HOST` and each with its own login, switched just by `cd`ing between them. |
 | `DEVELOPER=1` | Prints every outgoing request's method and URL to stderr (`[dev] GET ...`), useful when debugging which endpoint a command actually calls. |
 
 ## Local state
 
-- **Credentials** — `~/.yherdacmd/credentials.json` (mode 0600), written by `login` and refreshed automatically by the API client on a 401.
-- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, place, and thing. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it.
+- **Credentials** — `~/.yherdacmd/credentials.json` (mode 0600), written by `login` and refreshed automatically by the API client on a 401. With `YHERDA_SANDBOX=1` set, this becomes `./.yherdacmd/credentials.json` in the current working directory instead — a directory-scoped login rather than a machine-wide one.
+- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, place, and thing. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it. Already directory-scoped regardless of `YHERDA_SANDBOX`.
 
 ## Build and test
 
