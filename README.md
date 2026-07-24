@@ -39,6 +39,7 @@ extract the archive, and add the binary to your `PATH`.
 | `cmd/model.go` | The `model` command family — Subject-generic commands (`show`, `dispositions`, `states`, `states dispositions`) that operate on the platform's Subject base class by bare id, working the same way regardless of concrete subtype. Distinct from the per-type resource files above. |
 | `cmd/model_perspective.go` | `model perspective` — get/materialize a Subject's Perspective and manage the Contexts attached to it (`ContextPerspective`). |
 | `cmd/model_belief.go` | `model belief` — create a Belief (idea-scoped root create) and manage its attachment to Contexts (`BeliefContext`). |
+| `cmd/context.go` | `context` — Context CRUD (idea-scoped, nested `POST /api/idea/{id}/contexts/`, same pattern as Identity nested under Person) plus the active-context slot, and `context belief` — a context-first wrapper around the same `BeliefContext` API `model belief contexts` uses from the Belief side. |
 | `cmd/model_goal.go` | `model goals`, `model goal use`, `model steps` — Goal/Step CRUD on a Subject, plus the active-goal context slot. |
 | `cmd/model_add.go` | `model add perspective`/`model add goal` — the first commands that consume `ctx.Subject` (set by `model use`): add a capability to the active Subject, with an optional positional id override. |
 | `cmd/projects.go` | Project listing (`/api/ideaproject/`). |
@@ -71,7 +72,7 @@ Run `go mod tidy` after adding any new import.
 ## Local state
 
 - **Credentials** — `~/.yherdacmd/credentials.json` (mode 0600), written by `login` and refreshed automatically by the API client on a 401. With `YHERDA_SANDBOX=1` set, this becomes `./.yherdacmd/credentials.json` in the current working directory instead — a directory-scoped login rather than a machine-wide one.
-- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, place, and thing. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it. Already directory-scoped regardless of `YHERDA_SANDBOX`.
+- **Active context** — a `.yherda` file in the current working directory, holding the active workspace, idea, person, place, thing, and context. Most resource commands fall back to this context when an explicit ID flag isn't passed, and `useParent` (in `cmd/root.go`) persists newly-created or `use`d resources back into it. Already directory-scoped regardless of `YHERDA_SANDBOX`. `ideas use` and `ideas create` clear person/place/thing/context, since all four are scoped to a specific idea; `context use` itself doesn't cascade — Context is independent, not a descendant of person/place/thing.
 
 ## Build and test
 

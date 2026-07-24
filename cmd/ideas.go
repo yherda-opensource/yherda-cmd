@@ -91,6 +91,7 @@ var ideasCreateCmd = &cobra.Command{
 			ctx.Person = ""
 			ctx.Place = ""
 			ctx.Thing = ""
+			ctx.Context = ""
 			_ = config.SaveContext(ctx)
 		}
 		printJSON(result)
@@ -101,7 +102,7 @@ var ideasCreateCmd = &cobra.Command{
 var ideasUseCmd = &cobra.Command{
 	Use:     "use <id>",
 	Short:   "Set the active idea",
-	Long:    "Sets the active idea, stored in the .yherda context file. Clears any active person/place/thing, since those belong to a specific idea.",
+	Long:    "Sets the active idea, stored in the .yherda context file. Clears any active person/place/thing/context, since those belong to a specific idea.",
 	Example: `  yherda ideas use 42`,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -113,6 +114,7 @@ var ideasUseCmd = &cobra.Command{
 		ctx.Person = ""
 		ctx.Place = ""
 		ctx.Thing = ""
+		ctx.Context = ""
 		if err := config.SaveContext(ctx); err != nil {
 			return err
 		}

@@ -12,6 +12,7 @@ type Context struct {
 	Person       string   `json:"active_person,omitempty"`
 	Place        string   `json:"active_place,omitempty"`
 	Thing        string   `json:"active_thing,omitempty"`
+	Context      string   `json:"active_context,omitempty"`
 	State        string   `json:"active_state,omitempty"`
 	Goal         string   `json:"active_goal,omitempty"`
 	SubjectStack []string `json:"active_subject_stack,omitempty"`
