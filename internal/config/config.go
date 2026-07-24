@@ -12,12 +12,22 @@ type Credentials struct {
 	TokenType    string `json:"token_type"`
 }
 
+// credentialsDir returns the directory holding credentials.json. Normally
+// ~/.yherdacmd, but YHERDA_SANDBOX=1 scopes it to a hidden directory in the
+// current working directory instead, so different project directories can
+// hold independent logins (e.g. separate local/prod credentials, switched
+// via cd + a per-directory .envrc).
 func credentialsDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	var d string
+	if os.Getenv("YHERDA_SANDBOX") == "1" {
+		d = filepath.Join(".", ".yherdacmd")
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		d = filepath.Join(home, ".yherdacmd")
 	}
-	d := filepath.Join(home, ".yherdacmd")
 	if err := os.MkdirAll(d, 0700); err != nil {
 		return "", err
 	}
