@@ -58,6 +58,7 @@ func init() {
 	rootCmd.AddCommand(settingCmd)
 	rootCmd.AddCommand(thingCmd)
 	rootCmd.AddCommand(dispositionCmd)
+	rootCmd.AddCommand(contextCmd)
 	rootCmd.AddCommand(modelCmd)
 	rootCmd.AddCommand(workspaceListCmd)
 	// formatCmd, expressionCmd, and docsCmd are disabled — being replaced. See YOS-80.
@@ -112,6 +113,7 @@ func printContextRow(ctx *config.Context, subjectLabel func(string) string) {
 		{"person", ctx.Person},
 		{"place", ctx.Place},
 		{"thing", ctx.Thing},
+		{"context", ctx.Context},
 		{"state", ctx.State},
 		{"goal", ctx.Goal},
 		{"subject", subjectLabel(ctx.Subject())},
