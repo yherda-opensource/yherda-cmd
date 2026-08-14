@@ -223,10 +223,6 @@ var modelDispositionsCmd = &cobra.Command{
 	Short: "Manage a Subject's dispositions",
 }
 
-var modelDispositionType string
-var modelDispositionName string
-var modelDispositionDeleteID string
-
 var modelDispositionsListCmd = &cobra.Command{
 	Use:   "list [<id>]",
 	Short: "List dispositions for a Subject",
@@ -259,73 +255,12 @@ var modelDispositionsListCmd = &cobra.Command{
 	},
 }
 
-var modelDispositionsCreateCmd = &cobra.Command{
-	Use:   "create [<id>]",
-	Short: "Create a disposition on a Subject",
-	Long:  "Creates a disposition on a Subject. --type must be one of physical, emotional, mental, spiritual. Uses the active subject unless an id is passed.",
-	Example: `  yherda model dispositions create --type emotional --name "Grieving"
-  yherda model dispositions create 42 --type emotional --name "Grieving"`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subjectID, err := resolveSubjectID(args)
-		if err != nil {
-			return err
-		}
-		switch modelDispositionType {
-		case "physical", "emotional", "mental", "spiritual":
-		default:
-			return fmt.Errorf("--type must be one of physical, emotional, mental, spiritual")
-		}
-		if modelDispositionName == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		body := map[string]string{"type": modelDispositionType, "name": modelDispositionName}
-		if err := client.Post("/subject/"+subjectID+"/dispositions/", body, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		printContextWithSubject(client, subjectID)
-		return nil
-	},
-}
-
-var modelDispositionsDeleteCmd = &cobra.Command{
-	Use:   "delete [<id>]",
-	Short: "Delete a disposition from a Subject",
-	Long:  "Deletes a disposition from a Subject. Uses the active subject unless an id is passed.",
-	Example: `  yherda model dispositions delete --disposition 7
-  yherda model dispositions delete 42 --disposition 7`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subjectID, err := resolveSubjectID(args)
-		if err != nil {
-			return err
-		}
-		if modelDispositionDeleteID == "" {
-			return fmt.Errorf("--disposition is required")
-		}
-		client := mustClient()
-		body := map[string]string{"disposition": modelDispositionDeleteID}
-		if err := client.Delete("/subject/"+subjectID+"/dispositions/", body); err != nil {
-			return err
-		}
-		fmt.Printf("Disposition %s deleted\n", modelDispositionDeleteID)
-		printContextWithSubject(client, subjectID)
-		return nil
-	},
-}
-
 // --- states ---
 
 var modelStatesCmd = &cobra.Command{
 	Use:   "states",
 	Short: "Manage a Subject's states",
 }
-
-var modelStateName string
-var modelStateDeleteID string
 
 var modelStatesListCmd = &cobra.Command{
 	Use:   "list [<id>]",
@@ -354,58 +289,6 @@ var modelStatesListCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\n", strField(row, "id"), strField(row, "name"))
 		}
 		w.Flush()
-		printContextWithSubject(client, subjectID)
-		return nil
-	},
-}
-
-var modelStatesCreateCmd = &cobra.Command{
-	Use:   "create [<id>]",
-	Short: "Create a state on a Subject",
-	Long:  "Creates a state on a Subject. Uses the active subject unless an id is passed.",
-	Example: `  yherda model states create --name "Act Two"
-  yherda model states create 42 --name "Act Two"`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subjectID, err := resolveSubjectID(args)
-		if err != nil {
-			return err
-		}
-		if modelStateName == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/subject/"+subjectID+"/states/", map[string]string{"name": modelStateName}, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		printContextWithSubject(client, subjectID)
-		return nil
-	},
-}
-
-var modelStatesDeleteCmd = &cobra.Command{
-	Use:   "delete [<id>]",
-	Short: "Delete a state from a Subject",
-	Long:  "Deletes a state from a Subject. Uses the active subject unless an id is passed.",
-	Example: `  yherda model states delete --state 7
-  yherda model states delete 42 --state 7`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subjectID, err := resolveSubjectID(args)
-		if err != nil {
-			return err
-		}
-		if modelStateDeleteID == "" {
-			return fmt.Errorf("--state is required")
-		}
-		client := mustClient()
-		body := map[string]string{"state": modelStateDeleteID}
-		if err := client.Delete("/subject/"+subjectID+"/states/", body); err != nil {
-			return err
-		}
-		fmt.Printf("State %s deleted\n", modelStateDeleteID)
 		printContextWithSubject(client, subjectID)
 		return nil
 	},
@@ -483,65 +366,14 @@ var modelStatesDispositionsListCmd = &cobra.Command{
 	},
 }
 
-var modelStatesDispositionsSetCmd = &cobra.Command{
-	Use:   "set <disposition-id> [<state-id>]",
-	Short: "Bundle a disposition into a state",
-	Long: "Bundles a Disposition into a State. The Disposition must already exist on the same Subject as the State " +
-		"(via 'model dispositions create'), and the server enforces at most one Disposition per type per State — " +
-		"the CLI surfaces that validation error directly rather than pre-checking client-side.",
-	Example: `  yherda model states dispositions set 12
-  yherda model states dispositions set 12 7`,
-	Args: cobra.RangeArgs(1, 2),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		stateID, err := resolveStateID(args[1:])
-		if err != nil {
-			return err
-		}
-		client := mustClient()
-		var result map[string]any
-		body := map[string]string{"disposition": args[0]}
-		if err := client.Post("/state/"+stateID+"/dispositions/", body, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
-var modelStatesDispositionsUnsetCmd = &cobra.Command{
-	Use:   "unset <disposition-id> [<state-id>]",
-	Short: "Remove a disposition from a state",
-	Example: `  yherda model states dispositions unset 12
-  yherda model states dispositions unset 12 7`,
-	Args: cobra.RangeArgs(1, 2),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		stateID, err := resolveStateID(args[1:])
-		if err != nil {
-			return err
-		}
-		client := mustClient()
-		body := map[string]string{"disposition": args[0]}
-		if err := client.Delete("/state/"+stateID+"/dispositions/", body); err != nil {
-			return err
-		}
-		fmt.Printf("Disposition %s unset from state %s\n", args[0], stateID)
-		return nil
-	},
-}
-
 func init() {
 	modelListCmd.Flags().StringVar(&modelListType, "type", "", "Filter by subject_type (optional)")
 	modelListCmd.Flags().StringVar(&modelListSearch, "search", "", "Case-insensitive substring match on name (optional)")
 
-	modelDispositionsCreateCmd.Flags().StringVar(&modelDispositionType, "type", "", "Disposition type: physical, emotional, mental, spiritual (required)")
-	modelDispositionsCreateCmd.Flags().StringVar(&modelDispositionName, "name", "", "Name of the disposition (required)")
-	modelDispositionsDeleteCmd.Flags().StringVar(&modelDispositionDeleteID, "disposition", "", "Disposition ID to delete (required)")
-	modelDispositionsCmd.AddCommand(modelDispositionsListCmd, modelDispositionsCreateCmd, modelDispositionsDeleteCmd)
+	modelDispositionsCmd.AddCommand(modelDispositionsListCmd)
 
-	modelStatesCreateCmd.Flags().StringVar(&modelStateName, "name", "", "Name of the state (required)")
-	modelStatesDeleteCmd.Flags().StringVar(&modelStateDeleteID, "state", "", "State ID to delete (required)")
-	modelStatesDispositionsCmd.AddCommand(modelStatesDispositionsListCmd, modelStatesDispositionsSetCmd, modelStatesDispositionsUnsetCmd)
-	modelStatesCmd.AddCommand(modelStatesListCmd, modelStatesCreateCmd, modelStatesDeleteCmd, modelStatesUseCmd, modelStatesDispositionsCmd)
+	modelStatesDispositionsCmd.AddCommand(modelStatesDispositionsListCmd)
+	modelStatesCmd.AddCommand(modelStatesListCmd, modelStatesUseCmd, modelStatesDispositionsCmd)
 
 	modelCmd.AddCommand(modelShowCmd, modelListCmd, modelUseCmd, modelBackCmd, modelDispositionsCmd, modelStatesCmd)
 }

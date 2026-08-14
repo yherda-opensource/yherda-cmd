@@ -67,38 +67,6 @@ var ideasShowCmd = &cobra.Command{
 	},
 }
 
-var ideasCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new idea",
-	Long:    "Creates a new idea and sets it as the active idea (clearing any active person/place/thing).",
-	Example: `  yherda ideas create --name "The Long Way Home"`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		name, _ := cmd.Flags().GetString("name")
-		if name == "" {
-			return cmd.Usage()
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/idea/", map[string]string{"name": name}, &result); err != nil {
-			return err
-		}
-		if id := strField(result, "id"); id != "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ctx.Idea = id
-			ctx.Person = ""
-			ctx.Place = ""
-			ctx.Thing = ""
-			ctx.Context = ""
-			_ = config.SaveContext(ctx)
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 var ideasUseCmd = &cobra.Command{
 	Use:     "use <id>",
 	Short:   "Set the active idea",
@@ -124,6 +92,5 @@ var ideasUseCmd = &cobra.Command{
 }
 
 func init() {
-	ideasCreateCmd.Flags().String("name", "", "Name of the idea (required)")
-	ideasCmd.AddCommand(ideasListCmd, ideasShowCmd, ideasCreateCmd, ideasUseCmd)
+	ideasCmd.AddCommand(ideasListCmd, ideasShowCmd, ideasUseCmd)
 }

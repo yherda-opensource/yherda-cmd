@@ -61,43 +61,7 @@ var identityListCmd = &cobra.Command{
 	},
 }
 
-var identityCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new identity for a person",
-	Long:    "Creates a new identity for a person. Uses the active person unless --person is passed.",
-	Example: `  yherda identity create --name "The Skeptic" --person 7`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		personID, _ := cmd.Flags().GetString("person")
-		if personID == "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			personID = ctx.Person
-		}
-		if personID == "" {
-			return fmt.Errorf("--person is required (or set active person with 'yherda person use <id>')")
-		}
-		if cmd.Flags().Changed("person") {
-			useParent(func(ctx *config.Context, id string) { ctx.Person = id }, personID)
-		}
-		name, _ := cmd.Flags().GetString("name")
-		if name == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/person/"+personID+"/identities/", map[string]string{"name": name}, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 func init() {
 	identityListCmd.Flags().StringVar(&identityPersonID, "person", "", "Person ID (overrides active context)")
-	identityCreateCmd.Flags().String("person", "", "Person ID (overrides active context)")
-	identityCreateCmd.Flags().String("name", "", "Name of the identity (required)")
-	identityCmd.AddCommand(identityListCmd, identityCreateCmd)
+	identityCmd.AddCommand(identityListCmd)
 }
