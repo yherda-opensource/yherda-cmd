@@ -37,13 +37,13 @@ func TestMakePKCEPair(t *testing.T) {
 	}
 }
 
-func TestBuildAuthURL(t *testing.T) {
+func TestBuildAuthURL_IncludesIdeaOwnerReadByDefault(t *testing.T) {
 	t.Setenv("YHERDA_PUBLIC_HOST", "https://public.example.com")
 
 	redirectURI := "http://127.0.0.1:9999/callback"
 	challenge := "test-challenge"
 
-	raw := buildAuthURL(redirectURI, challenge)
+	raw := buildAuthURL(redirectURI, challenge, true)
 	parsed, err := url.Parse(raw)
 	if err != nil {
 		t.Fatalf("buildAuthURL produced invalid URL: %v", err)
@@ -54,7 +54,7 @@ func TestBuildAuthURL(t *testing.T) {
 		"response_type":         "code",
 		"client_id":             clientID,
 		"redirect_uri":          redirectURI,
-		"scope":                 scope,
+		"scope":                 "idea_owner_read collaborator_read collaborator_write",
 		"code_challenge":        challenge,
 		"code_challenge_method": "S256",
 	}
@@ -66,6 +66,34 @@ func TestBuildAuthURL(t *testing.T) {
 
 	if !strings.HasPrefix(raw, "https://public.example.com") {
 		t.Errorf("URL does not use YHERDA_PUBLIC_HOST base: %s", raw)
+	}
+}
+
+func TestBuildAuthURL_ExcludesIdeaOwnerReadWhenOptedOut(t *testing.T) {
+	t.Setenv("YHERDA_PUBLIC_HOST", "https://public.example.com")
+
+	raw := buildAuthURL("http://127.0.0.1:9999/callback", "test-challenge", false)
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		t.Fatalf("buildAuthURL produced invalid URL: %v", err)
+	}
+
+	got := parsed.Query().Get("scope")
+	want := "collaborator_read collaborator_write"
+	if got != want {
+		t.Errorf("scope: got %q, want %q", got, want)
+	}
+	if strings.Contains(got, "idea_owner_read") {
+		t.Errorf("scope should not contain idea_owner_read: %q", got)
+	}
+}
+
+func TestRequestedScope(t *testing.T) {
+	if got := requestedScope(true); got != "idea_owner_read collaborator_read collaborator_write" {
+		t.Errorf("requestedScope(true): got %q", got)
+	}
+	if got := requestedScope(false); got != "collaborator_read collaborator_write" {
+		t.Errorf("requestedScope(false): got %q", got)
 	}
 }
 

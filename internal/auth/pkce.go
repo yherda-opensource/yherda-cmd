@@ -21,7 +21,13 @@ import (
 const (
 	clientID    = "yherda-cmd-public-client"
 	defaultBase = "https://public.a.yherda.com"
-	scope       = "read write"
+	// YOS-86: the CLI's server-side OAuthApplicationScopeAllowlist
+	// (GEN-627) permanently caps this client to idea_owner_read plus
+	// full Collaborator scope - idea_owner_write and Workspace Owner
+	// scope are never grantable to yherda-cmd regardless of what's
+	// requested here.
+	collaboratorScope  = "collaborator_read collaborator_write"
+	ideaOwnerReadScope = "idea_owner_read"
 )
 
 func baseURL() string {
@@ -42,7 +48,13 @@ func httpClient() *http.Client {
 	return http.DefaultClient
 }
 
-func Login() (*config.Credentials, error) {
+// Login runs the PKCE authorization-code flow. includeIdeaOwnerRead
+// controls whether idea_owner_read is requested alongside the always-on
+// Collaborator scope - YOS-86: a per-instance opt-out, not a hardcoded
+// scope string, since Collaborator scope alone is sometimes preferable
+// (e.g. a token intentionally scoped to never read Ideas this user owns
+// outside Occupation-reachable territory).
+func Login(includeIdeaOwnerRead bool) (*config.Credentials, error) {
 	verifier, challenge, err := makePKCEPair()
 	if err != nil {
 		return nil, fmt.Errorf("generating PKCE pair: %w", err)
@@ -85,7 +97,7 @@ func Login() (*config.Credentials, error) {
 		}
 	}()
 
-	authURL := buildAuthURL(redirectURI, challenge)
+	authURL := buildAuthURL(redirectURI, challenge, includeIdeaOwnerRead)
 	fmt.Printf("Opening browser to authenticate...\n%s\n\n", authURL)
 	openBrowser(authURL)
 
@@ -115,12 +127,19 @@ func Login() (*config.Credentials, error) {
 	return creds, nil
 }
 
-func buildAuthURL(redirectURI, challenge string) string {
+func requestedScope(includeIdeaOwnerRead bool) string {
+	if includeIdeaOwnerRead {
+		return ideaOwnerReadScope + " " + collaboratorScope
+	}
+	return collaboratorScope
+}
+
+func buildAuthURL(redirectURI, challenge string, includeIdeaOwnerRead bool) string {
 	params := url.Values{
 		"response_type":         {"code"},
 		"client_id":             {clientID},
 		"redirect_uri":          {redirectURI},
-		"scope":                 {scope},
+		"scope":                 {requestedScope(includeIdeaOwnerRead)},
 		"code_challenge":        {challenge},
 		"code_challenge_method": {"S256"},
 	}
