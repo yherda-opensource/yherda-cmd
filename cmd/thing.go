@@ -83,51 +83,7 @@ var thingUseCmd = &cobra.Command{
 	},
 }
 
-var thingCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new thing for an idea",
-	Long:    "Creates a new thing for an idea and sets it active. Uses the active idea unless --idea is passed.",
-	Example: `  yherda thing create --name "The Letter" --idea 42`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ideaID, _ := cmd.Flags().GetString("idea")
-		if ideaID == "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ideaID = ctx.Idea
-		}
-		if ideaID == "" {
-			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
-		}
-		name, _ := cmd.Flags().GetString("name")
-		if name == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/idea/"+ideaID+"/things/", map[string]string{"name": name}, &result); err != nil {
-			return err
-		}
-		if id := strField(result, "id"); id != "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ctx.Idea = ideaID
-			ctx.Thing = id
-			ctx.Person = ""
-			ctx.Place = ""
-			_ = config.SaveContext(ctx)
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 func init() {
 	thingListCmd.Flags().StringVar(&thingIdeaID, "idea", "", "Idea ID (overrides active context)")
-	thingCreateCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
-	thingCreateCmd.Flags().String("name", "", "Name of the thing (required)")
-	thingCmd.AddCommand(thingListCmd, thingUseCmd, thingCreateCmd)
+	thingCmd.AddCommand(thingListCmd, thingUseCmd)
 }

@@ -83,51 +83,7 @@ var placeUseCmd = &cobra.Command{
 	},
 }
 
-var placeCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new place for an idea",
-	Long:    "Creates a new place for an idea and sets it active. Uses the active idea unless --idea is passed.",
-	Example: `  yherda place create --name "The Lighthouse" --idea 42`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ideaID, _ := cmd.Flags().GetString("idea")
-		if ideaID == "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ideaID = ctx.Idea
-		}
-		if ideaID == "" {
-			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
-		}
-		name, _ := cmd.Flags().GetString("name")
-		if name == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/idea/"+ideaID+"/places/", map[string]string{"name": name}, &result); err != nil {
-			return err
-		}
-		if id := strField(result, "id"); id != "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ctx.Idea = ideaID
-			ctx.Place = id
-			ctx.Person = ""
-			ctx.Thing = ""
-			_ = config.SaveContext(ctx)
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 func init() {
 	placeListCmd.Flags().StringVar(&placeIdeaID, "idea", "", "Idea ID (overrides active context)")
-	placeCreateCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
-	placeCreateCmd.Flags().String("name", "", "Name of the place (required)")
-	placeCmd.AddCommand(placeListCmd, placeUseCmd, placeCreateCmd)
+	placeCmd.AddCommand(placeListCmd, placeUseCmd)
 }

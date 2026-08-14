@@ -19,48 +19,6 @@ func TestModelGoalsList_MissingID_Error(t *testing.T) {
 	}
 }
 
-// --- goals create ---
-
-func TestModelGoalsCreate_SkipConfirm_ReachesAPIDirectly(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"model", "goals", "create", "42", "--want", "To find her father", "--yes"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "aborted" {
-		t.Error("--yes should have skipped the confirmation prompt entirely")
-	}
-}
-
-func TestModelGoalsCreate_EmptyWant_WarnsButProceeds(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"model", "goals", "create", "42", "--yes"})
-	err := rootCmd.Execute()
-	if err != nil && strings.Contains(err.Error(), "--want is required") {
-		t.Errorf("empty --want should warn, not hard-block: %v", err)
-	}
-}
-
-func TestModelGoalsCreate_ConfirmDeclined_Aborts(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	// mustClient()'s "get subject" call will fail before reaching the prompt in
-	// this test environment (no live server), so this asserts the confirm gate
-	// is at least reached before the create call fires — not skipped by --yes.
-	old := confirmReader
-	confirmReader = strings.NewReader("n\n")
-	defer func() { confirmReader = old }()
-
-	rootCmd.SetArgs([]string{"model", "goals", "create", "42", "--want", "To find her father"})
-	err := rootCmd.Execute()
-	if err == nil {
-		t.Fatal("expected an error (either from the subject lookup or the declined confirmation)")
-	}
-}
-
 // --- goal use ---
 
 func TestModelGoalUse_SetsGoalOnly_DoesNotClearPersonPlaceThingState(t *testing.T) {
@@ -117,37 +75,6 @@ func TestModelStepsList_ContextGoal_ReachesAPI(t *testing.T) {
 	err := rootCmd.Execute()
 	if err != nil && err.Error() == "no active goal — pass a goal id or run 'yherda model goal use <goal-id>'" {
 		t.Errorf("active goal in context should have satisfied the requirement: %v", err)
-	}
-}
-
-func TestModelStepsCreate_MissingDescription_Error(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", Goal: "goal-1"})
-
-	rootCmd.SetArgs([]string{"model", "steps", "create"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when --description is missing")
-	}
-}
-
-func TestModelStepsCreate_NoArgNoContext_Error(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"model", "steps", "create", "--description", "Ask the innkeeper"})
-	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when no goal id arg and no active goal in context")
-	}
-}
-
-func TestModelStepsCreate_ExplicitGoalID_ReachesAPI(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	rootCmd.SetArgs([]string{"model", "steps", "create", "15", "--description", "Ask the innkeeper"})
-	err := rootCmd.Execute()
-	if err != nil && err.Error() == "no active goal — pass a goal id or run 'yherda model goal use <goal-id>'" {
-		t.Errorf("explicit goal id arg should have satisfied the requirement: %v", err)
 	}
 }
 

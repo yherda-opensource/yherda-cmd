@@ -85,46 +85,6 @@ var contextUseCmd = &cobra.Command{
 	},
 }
 
-var contextCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new context for an idea",
-	Long:    "Creates a new context for an idea and sets it active. Uses the active idea unless --idea is passed.",
-	Example: `  yherda context create --name "The King's Betrayal" --idea 42`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ideaID, _ := cmd.Flags().GetString("idea")
-		if ideaID == "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ideaID = ctx.Idea
-		}
-		if ideaID == "" {
-			return fmt.Errorf("--idea is required (or set active idea with 'yherda ideas use <id>')")
-		}
-		name, _ := cmd.Flags().GetString("name")
-		if name == "" {
-			return fmt.Errorf("--name is required")
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/idea/"+ideaID+"/contexts/", map[string]string{"name": name}, &result); err != nil {
-			return err
-		}
-		if id := strField(result, "id"); id != "" {
-			ctx, err := config.LoadContext()
-			if err != nil {
-				return err
-			}
-			ctx.Idea = ideaID
-			ctx.Context = id
-			_ = config.SaveContext(ctx)
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 // --- context belief ---
 
 var contextBeliefCmd = &cobra.Command{
@@ -134,9 +94,6 @@ var contextBeliefCmd = &cobra.Command{
 }
 
 var contextBeliefContextID string
-var contextBeliefID string
-var contextBeliefStatus string
-var contextBeliefMode string
 
 func resolveContextID(explicit string) (string, error) {
 	if explicit != "" {
@@ -150,37 +107,6 @@ func resolveContextID(explicit string) (string, error) {
 		return "", fmt.Errorf("--context is required (or set active context with 'yherda context use <id>')")
 	}
 	return ctx.Context, nil
-}
-
-var contextBeliefAddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Attach a Belief to a context",
-	Long:  "Attaches a Belief to a context. Uses the active context unless --context is passed. --status defaults to Active, --mode defaults to Surfacing on the server when omitted.",
-	Example: `  yherda context belief add --belief 12
-  yherda context belief add --context 3 --belief 12 --status Emerging --mode Masking`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		contextID, err := resolveContextID(contextBeliefContextID)
-		if err != nil {
-			return err
-		}
-		if contextBeliefID == "" {
-			return fmt.Errorf("--belief is required")
-		}
-		body := map[string]string{"belief": contextBeliefID}
-		if contextBeliefStatus != "" {
-			body["status"] = contextBeliefStatus
-		}
-		if contextBeliefMode != "" {
-			body["mode"] = contextBeliefMode
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/context/"+contextID+"/beliefs/", body, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		return nil
-	},
 }
 
 var contextBeliefListCmd = &cobra.Command{
@@ -216,44 +142,11 @@ var contextBeliefListCmd = &cobra.Command{
 	},
 }
 
-var contextBeliefRemoveCmd = &cobra.Command{
-	Use:     "remove",
-	Short:   "Detach a Belief from a context",
-	Long:    "Detaches a Belief from a context. Uses the active context unless --context is passed.",
-	Example: `  yherda context belief remove --belief 12`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		contextID, err := resolveContextID(contextBeliefContextID)
-		if err != nil {
-			return err
-		}
-		if contextBeliefID == "" {
-			return fmt.Errorf("--belief is required")
-		}
-		client := mustClient()
-		body := map[string]string{"belief": contextBeliefID}
-		if err := client.Delete("/context/"+contextID+"/beliefs/", body); err != nil {
-			return err
-		}
-		fmt.Printf("Belief %s detached from context %s\n", contextBeliefID, contextID)
-		return nil
-	},
-}
-
 func init() {
 	contextListCmd.Flags().StringVar(&contextIdeaID, "idea", "", "Idea ID (overrides active context)")
-	contextCreateCmd.Flags().String("idea", "", "Idea ID (overrides active context)")
-	contextCreateCmd.Flags().String("name", "", "Name of the context (required)")
-
-	contextBeliefAddCmd.Flags().StringVar(&contextBeliefContextID, "context", "", "Context ID (overrides active context)")
-	contextBeliefAddCmd.Flags().StringVar(&contextBeliefID, "belief", "", "Belief ID (required)")
-	contextBeliefAddCmd.Flags().StringVar(&contextBeliefStatus, "status", "", "Emerging, Active, Strained, or Former (defaults to Active on the server)")
-	contextBeliefAddCmd.Flags().StringVar(&contextBeliefMode, "mode", "", "Masking or Surfacing (defaults to Surfacing on the server)")
 
 	contextBeliefListCmd.Flags().StringVar(&contextBeliefContextID, "context", "", "Context ID (overrides active context)")
 
-	contextBeliefRemoveCmd.Flags().StringVar(&contextBeliefContextID, "context", "", "Context ID (overrides active context)")
-	contextBeliefRemoveCmd.Flags().StringVar(&contextBeliefID, "belief", "", "Belief ID (required)")
-
-	contextBeliefCmd.AddCommand(contextBeliefAddCmd, contextBeliefListCmd, contextBeliefRemoveCmd)
-	contextCmd.AddCommand(contextListCmd, contextCreateCmd, contextUseCmd, contextBeliefCmd)
+	contextBeliefCmd.AddCommand(contextBeliefListCmd)
+	contextCmd.AddCommand(contextListCmd, contextUseCmd, contextBeliefCmd)
 }

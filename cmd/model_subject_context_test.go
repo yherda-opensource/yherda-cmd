@@ -95,34 +95,6 @@ func TestModelStatesList_DoesNotError(t *testing.T) {
 	}
 }
 
-func TestModelPerspectiveGet_JSONMode_SkipsFooter(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	out := captureStdout(t, func() {
-		rootCmd.SetArgs([]string{"model", "perspective", "get", "42", "--json"})
-		rootCmd.Execute()
-	})
-
-	if bytes.Contains([]byte(out), []byte("Subject:")) {
-		t.Errorf("--json mode should not print the human-readable Subject record line, got: %q", out)
-	}
-}
-
-func TestPrintContextWithSubject_NoContext_SkipsFooter(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000"})
-
-	out := captureStdout(t, func() {
-		rootCmd.SetArgs([]string{"model", "perspective", "get", "42", "--no-context"})
-		rootCmd.Execute()
-	})
-
-	if bytes.Contains([]byte(out), []byte("Subject:")) {
-		t.Errorf("--no-context should suppress the Subject record footer line, got: %q", out)
-	}
-}
-
 // --- context footer shows the active Subject's full row ---
 
 func TestSubjectContextLabel_Empty_ReturnsEmpty(t *testing.T) {
@@ -280,20 +252,6 @@ func TestModelStatesList_NoArg_FallsBackToContext(t *testing.T) {
 	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
 
 	rootCmd.SetArgs([]string{"model", "states", "list"})
-	err := rootCmd.Execute()
-	if err == nil {
-		t.Fatal("expected an error against the fake test server")
-	}
-	if bytes.Contains([]byte(err.Error()), []byte("no active subject")) {
-		t.Errorf("should have used ctx.Subject fallback, not errored on missing subject: %v", err)
-	}
-}
-
-func TestModelPerspectiveGet_NoArg_FallsBackToContext(t *testing.T) {
-	withTempHome(t)
-	saveContextWithCreds(t, &config.Context{Workspace: "ws", APIServer: "https://ws.yherda.test:8000", SubjectStack: []string{"42"}})
-
-	rootCmd.SetArgs([]string{"model", "perspective", "get"})
 	err := rootCmd.Execute()
 	if err == nil {
 		t.Fatal("expected an error against the fake test server")

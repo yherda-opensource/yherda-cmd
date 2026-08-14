@@ -50,72 +50,6 @@ var modelGoalsListCmd = &cobra.Command{
 	},
 }
 
-var modelGoalWant string
-var modelGoalNeed string
-var modelGoalTragedy bool
-var modelGoalDescription string
-var modelGoalsCreateSkipConfirm bool
-
-var modelGoalsCreateCmd = &cobra.Command{
-	Use:   "create [<subject-id>]",
-	Short: "Create a Goal on a Subject",
-	Long: "Creates a Goal on a Subject. If the Subject has no Self yet, this also cascades a default Identity " +
-		"and that Identity's own Perspective/Disposition into existence — you'll be asked to confirm before that " +
-		"happens unless --yes is passed. Uses the active subject unless a subject id is passed.",
-	Example: `  yherda model goals create --want "To find her father"
-  yherda model goals create 42 --want "To find her father" --need "To let go of guilt" --tragedy`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subjectID, err := resolveSubjectID(args)
-		if err != nil {
-			return err
-		}
-		return createGoalOnSubject(subjectID, modelGoalsCreateSkipConfirm)
-	},
-}
-
-// createGoalOnSubject creates a Goal on the given Subject, confirming first
-// (unless skipConfirm) when the Subject has no Self yet — shared by
-// 'model goals create <subject-id>' and 'model add goal [<subject-id>]',
-// which differ only in how they resolve the target Subject id.
-func createGoalOnSubject(subjectID string, skipConfirm bool) error {
-	if modelGoalWant == "" {
-		fmt.Println("Warning: --want is empty. A Goal without a want is technically valid but not very useful.")
-	}
-	client := mustClient()
-	if !skipConfirm {
-		var subject map[string]any
-		if err := client.Get("/subject/"+subjectID+"/", &subject); err != nil {
-			return err
-		}
-		hasSelf := subject["has_self"] == true
-		if !hasSelf {
-			name := strField(subject, "name")
-			subjectType := strField(subject, "subject_type")
-			prompt := fmt.Sprintf(
-				"Subject #%s %q (%s) has no Self yet — creating a Goal will also create its Self, a default Identity, and that Identity's own Perspective/Disposition. Continue? [y/N] ",
-				subjectID, name, subjectType,
-			)
-			if !confirm(prompt) {
-				return fmt.Errorf("aborted")
-			}
-		}
-	}
-	body := map[string]any{
-		"want":        modelGoalWant,
-		"need":        modelGoalNeed,
-		"tragedy":     modelGoalTragedy,
-		"description": modelGoalDescription,
-	}
-	var result map[string]any
-	if err := client.Post("/subject/"+subjectID+"/goals/", body, &result); err != nil {
-		return err
-	}
-	printJSON(result)
-	printContextWithSubject(client, subjectID)
-	return nil
-}
-
 // modelGoalCmd is the singular 'goal' command, distinct from the plural
 // 'goals' resource-management command above — 'goal use' mirrors the
 // 'person use'/'place use' shape of the other Subject-bearing resources.
@@ -198,49 +132,10 @@ var modelStepsListCmd = &cobra.Command{
 	},
 }
 
-var modelStepDescription string
-var modelStepNumber int
-
-var modelStepsCreateCmd = &cobra.Command{
-	Use:   "create [<goal-id>]",
-	Short: "Create a Step on a Goal",
-	Long:  "Creates a Step on a Goal. Uses the active goal unless a goal id is passed.",
-	Example: `  yherda model steps create --description "Ask the innkeeper"
-  yherda model steps create 15 --description "Ask the innkeeper" --number 1`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		goalID, err := resolveGoalID(args)
-		if err != nil {
-			return err
-		}
-		if modelStepDescription == "" {
-			return fmt.Errorf("--description is required")
-		}
-		body := map[string]any{"description": modelStepDescription}
-		if cmd.Flags().Changed("number") {
-			body["number"] = modelStepNumber
-		}
-		client := mustClient()
-		var result map[string]any
-		if err := client.Post("/goal/"+goalID+"/steps/", body, &result); err != nil {
-			return err
-		}
-		printJSON(result)
-		return nil
-	},
-}
-
 func init() {
-	modelGoalsCreateCmd.Flags().StringVar(&modelGoalWant, "want", "", "What the Subject wants")
-	modelGoalsCreateCmd.Flags().StringVar(&modelGoalNeed, "need", "", "What the Subject actually needs")
-	modelGoalsCreateCmd.Flags().BoolVar(&modelGoalTragedy, "tragedy", false, "Whether achieving the want costs the need")
-	modelGoalsCreateCmd.Flags().StringVar(&modelGoalDescription, "description", "", "Free-form description")
-	modelGoalsCreateCmd.Flags().BoolVarP(&modelGoalsCreateSkipConfirm, "yes", "y", false, "Skip the confirmation prompt when a Self/Identity cascade would be created")
-	modelGoalsCmd.AddCommand(modelGoalsListCmd, modelGoalsCreateCmd)
+	modelGoalsCmd.AddCommand(modelGoalsListCmd)
 
-	modelStepsCreateCmd.Flags().StringVar(&modelStepDescription, "description", "", "Step description (required)")
-	modelStepsCreateCmd.Flags().IntVar(&modelStepNumber, "number", 0, "Step order number (optional)")
-	modelStepsCmd.AddCommand(modelStepsListCmd, modelStepsCreateCmd)
+	modelStepsCmd.AddCommand(modelStepsListCmd)
 
 	modelGoalCmd.AddCommand(modelGoalUseCmd)
 
