@@ -36,6 +36,7 @@ func TestSaveAndLoadContext(t *testing.T) {
 		Thing:        "thing-1",
 		State:        "state-1",
 		Goal:         "goal-1",
+		Expression:   "expr-1",
 		SubjectStack: []string{"subject-1"},
 	}
 	if err := SaveContext(ctx); err != nil {
@@ -71,6 +72,9 @@ func TestSaveAndLoadContext(t *testing.T) {
 	}
 	if loaded.Subject() != ctx.Subject() {
 		t.Errorf("active_subject_stack: got %q, want %q", loaded.Subject(), ctx.Subject())
+	}
+	if loaded.Expression != ctx.Expression {
+		t.Errorf("active_expression: got %q, want %q", loaded.Expression, ctx.Expression)
 	}
 }
 

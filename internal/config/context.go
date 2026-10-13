@@ -15,6 +15,7 @@ type Context struct {
 	Context      string   `json:"active_context,omitempty"`
 	State        string   `json:"active_state,omitempty"`
 	Goal         string   `json:"active_goal,omitempty"`
+	Expression   string   `json:"active_expression,omitempty"`
 	SubjectStack []string `json:"active_subject_stack,omitempty"`
 }
 
