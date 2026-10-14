@@ -60,6 +60,7 @@ which workspaces are available to you.`,
 			ctx.Person = ""
 			ctx.Place = ""
 			ctx.Thing = ""
+			ctx.Expression = ""
 			if err := config.SaveContext(ctx); err != nil {
 				return fmt.Errorf("failed to save context: %w", err)
 			}
